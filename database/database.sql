@@ -1,4 +1,5 @@
 CREATE DATABASE hosbank;
+
 USE hosbank;
 
 
