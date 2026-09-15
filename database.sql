@@ -1,4 +1,5 @@
 CREATE DATABASE hosbank;
+
 USE hosbank;
 
 
@@ -45,7 +46,7 @@ CREATE TABLE Bénéficiaire (
 );
 
 
-CREATE TABLE Compte_bancaire (
+CREATE TABLE `Compte bancaire` (
     id INT PRIMARY KEY AUTO_INCREMENT,
     numeroCompte VARCHAR(50) UNIQUE NOT NULL,
     iban VARCHAR(34) UNIQUE NOT NULL,
@@ -58,7 +59,7 @@ CREATE TABLE Compte_bancaire (
 );
 
 
-CREATE TABLE Carte_bancaire (
+CREATE TABLE `Carte bancaire` (
      id INT PRIMARY KEY AUTO_INCREMENT,
      numerodeCart VARCHAR(16) UNIQUE NOT NULL,
      dateExperation DATE NOT NULL,
