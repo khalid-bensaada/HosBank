@@ -9,10 +9,9 @@
 
 </head>
 
-<body class="min-h-screen bg-[#f7f8ff] flex items-center justify-center px-4">
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
 
-<main
-        class="w-full max-w-[262px] min-h-[363px] bg-white rounded-xl px-[19px] py-[45px] shadow-[0_4px_20px_rgba(30,60,100,0.06)]">
+<main class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
     <div class="text-center">
 
         <div class="mx-auto w-[66px] h-[66px] rounded-full bg-[#c4f9e9] flex items-center justify-center">
@@ -24,22 +23,22 @@
             </div>
         </div>
 
-        <h1 class="mt-5 text-[13px] font-bold tracking-[-0.4px] text-[#17233b]">
+        <h1 class="mt-6 text-2xl font-bold text-slate-900">
             Email vérifié avec succès
         </h1>
 
-        <p class="mt-1 text-[8px] text-[#8a909c] leading-[1.5]">
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
             Votre adresse e-mail a bien été confirmée. Votre
             <br>
             compte HosBank est désormais actif et sécurisé.
         </p>
 
-        <div class="mt-6 rounded-lg bg-[#f1f5ff] px-3 py-3">
-            <h2 class="text-[8px] font-semibold text-[#30384c]">
-                Bienvenue chez vous, SirajEddin !
+        <div class="mt-6 rounded-xl bg-blue-50 px-4 py-4">
+            <h2 class="text-sm font-semibold text-slate-800">
+                Bienvenue chez vous, <%= prenom %> !
             </h2>
 
-            <p class="mt-1 text-[7px] text-[#8a909c] leading-[1.65]">
+            <p class="mt-2 text-sm text-slate-500 leading-relaxed">
                 Votre espace personnel est prêt. Vous pouvez dès à
                 <br>
                 présent vous connecter pour finaliser vos
@@ -48,8 +47,8 @@
             </p>
         </div>
 
-        <a href="#"
-           class="mt-5 h-[29px] rounded-lg bg-[#3475ed] hover:bg-[#2563d8] transition-colors flex items-center justify-center text-[8px] font-medium text-white shadow-[0_3px_8px_rgba(52,117,237,0.25)]">
+        <a href="/auth/login"
+           class="mt-6 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center text-sm font-bold text-white">
             Se connecter à mon compte
         </a>
 
