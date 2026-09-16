@@ -10,6 +10,10 @@ export function showRegister(req, res){
     res.render("auth/register");
 }
 
+export function showLogin(req, res){
+    res.render("auth/login");
+}
+
 // function of register
 
 export async function register(req, res){
@@ -124,4 +128,28 @@ export async function verifyEmail(req, res) {
         console.error(error);
         return res.status(500).send("Server error");
     }
+}
+
+export async function login(req, res){
+    const {email, motdepass} = req.body;
+
+    const [users] = await connection.query(`SELECT * FROM utilisateur WHERE email= ?`,[email] );
+
+    const user = users[0];
+
+    const passwordValide = await bcrypt.compare(motdepass, user.motDePass);
+
+    if(!passwordValide){
+        return res.status(401).render("auth/login", {
+            error : "Email ou Mot De Passe Incorrect."
+        });
+    }
+
+    if(!user.emailVerifie){
+        res.status(403).render("auth/login", {
+            error : "Verifier ton Email avant se connecter."
+        });
+    }
+
+    return res.send("identif valides ... ok");
 }
