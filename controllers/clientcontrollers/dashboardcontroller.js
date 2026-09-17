@@ -116,3 +116,46 @@ export async function getRecentOperations(req, res) {
         return res.status(500).json({ message: 'error in server' });
     }
 };
+
+export async function getOperationDetails(req, res) {
+    try {
+        const userId = req.user?.id;
+        const { operationId } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
+        }
+
+        if (!operationId) {
+            return res.status(400).json({ message: 'Operation ID is required' });
+        }
+
+
+        const operation = await connection('Opération')
+            .join('Compte bancaire', 'Opération.compteId', '=', 'Compte bancaire.id')
+            .where({
+                'Opération.id': operationId,
+                'Compte bancaire.clientId': userId
+            })
+            .select(
+                'Opération.*',
+                'Compte bancaire.numeroCompte',
+                'Compte bancaire.typedecompte'
+            )
+            .first();
+
+
+        if (!operation) {
+            return res.status(404).json({ message: 'Operation not found or access denied' });
+        }
+
+        return res.status(200).json({
+            operation
+        });
+
+    } catch (error) {
+
+        console.error('Error about get operation details', error);
+        return res.status(500).json({ message: 'error in server' });
+    }
+};
