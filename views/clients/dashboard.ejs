@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#f7f8fc]">
+    <main class="pt-1">
+        <div class="info-user mx-2 flex min-h-14 items-center justify-between gap-4 border  bg-white px-4 py-3">
+            <div id="msg-user">
+                <h1 class="text-sm font-semibold text-[#071c3b]">
+                    Bonjour, <%= user.prenom.charAt(0).toUpperCase() + user.prenom.slice(1).toLowerCase() %>
+                </h1>
+            </div>
+
+            <div class="btn-side flex shrink-0 items-center gap-2">
+                <button
+                    id="btn-telecharger"
+                    type="button"
+                    class="rounded-md bg-[#eff4ff] px-3 py-2 text-[10px] font-medium text-[#004ac6] transition-colors hover:bg-[#dfe9ff]"
+                >
+                    T&eacute;l&eacute;charger RIB
+                </button>
+                <button
+                    id="btn-virement"
+                    type="button"
+                    class="rounded-md bg-[#004ac6] px-3 py-2 text-[10px] font-medium text-white transition-colors hover:bg-[#003da3]"
+                >
+                    Virement
+                </button>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

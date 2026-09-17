@@ -131,25 +131,54 @@ export async function verifyEmail(req, res) {
 }
 
 export async function login(req, res){
-    const {email, motdepass} = req.body;
+    try {
+        const {email, motdepass} = req.body;
 
-    const [users] = await connection.query(`SELECT * FROM utilisateur WHERE email= ?`,[email] );
+        if (!email || !motdepass) {
+            return res.status(400).render("auth/login", {
+                error: "Email et mot de passe sont obligatoires."
+            });
+        }
 
-    const user = users[0];
+        const [users] = await connection.query(
+            "SELECT * FROM utilisateur WHERE email = ?",
+            [email]
+        );
 
-    const passwordValide = await bcrypt.compare(motdepass, user.motDePass);
+        const user = users[0];
 
-    if(!passwordValide){
-        return res.status(401).render("auth/login", {
-            error : "Email ou Mot De Passe Incorrect."
+        if (!user) {
+            return res.status(401).render("auth/login", {
+                error: "Email ou Mot De Passe Incorrect."
+            });
+        }
+
+        const passwordValide = await bcrypt.compare(motdepass, user.motDePass);
+
+        if (!passwordValide) {
+            return res.status(401).render("auth/login", {
+                error: "Email ou Mot De Passe Incorrect."
+            });
+        }
+
+        if (!user.emailVerifie) {
+            return res.status(403).render("auth/login", {
+                error: "Verifier ton Email avant se connecter."
+            });
+        }
+
+        req.session.userId = user.id;
+
+        return req.session.save((error) => {
+            if (error) {
+                console.error("Error while saving the session:", error);
+                return res.status(500).send("Server error");
+            }
+
+            return res.redirect("/dashboard");
         });
+    } catch (error) {
+        console.error("Login error:", error);
+        return res.status(500).send("Server error");
     }
-
-    if(!user.emailVerifie){
-        res.status(403).render("auth/login", {
-            error : "Verifier ton Email avant se connecter."
-        });
-    }
-
-    return res.send("identif valides ... ok");
 }

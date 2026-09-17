@@ -1,6 +1,8 @@
 import express from "express";
+import session from "express-session";
 
 import authRoutes from "./routes/authroute.js";
+import dashboardRoutes from "./routes/dashboardroute.js";
 
 
 const app = express();
@@ -16,10 +18,21 @@ app.use(express.urlencoded({
 
 app.use(express.json());
 
+app.use(session({
+    secret: "hosbank-secret",
+    resave: false,
+    saveUninitialized: false
+}));
+
 
 app.use(
     "/auth",
     authRoutes
+);
+
+app.use(
+    "/dashboard",
+    dashboardRoutes
 );
 
 app.get("/", (req, res) => {

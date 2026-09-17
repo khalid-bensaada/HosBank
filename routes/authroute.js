@@ -29,10 +29,6 @@ router.get(
     verifyEmail
 );
 
-router.get(
-    "/login", showLogin
-)
-
 router.post(
     "/login", login
 )

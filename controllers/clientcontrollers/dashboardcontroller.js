@@ -1,6 +1,32 @@
-import {connection} from "../config/database.js";
+import {connection} from "../../config/database.js";
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
+
+export async function showDashboard(req, res) {
+    try {
+        const userId = req.session?.userId;
+
+        if (!userId) {
+            return res.redirect("/auth/login");
+        }
+
+        const [users] = await connection.query(
+            "SELECT id, nom, prenom FROM utilisateur WHERE id = ?",
+            [userId]
+        );
+
+        const user = users[0];
+
+        if (!user) {
+            return req.session.destroy(() => res.redirect("/auth/login"));
+        }
+
+        return res.render("clients/dashboard", {user});
+    } catch (error) {
+        console.error("Error while loading the dashboard:", error);
+        return res.status(500).send("Server error");
+    }
+}
 
 
 
@@ -29,16 +55,18 @@ function generateCardNumber() {
 
 export async function getUserInfo(req, res) {
     try {
-        const userId = req.user?.id;
+        const userId = req.session?.userId;
 
         if (!userId) {
             return res.status(401).json({ message: 'The Access is impossible' });
         }
 
-        const user = await connection('Utilisateur')
-            .select('nom', 'prenom')
-            .where({ id: userId })
-            .first();
+        const [users] = await connection.query(
+            "SELECT nom, prenom FROM utilisateur WHERE id = ?",
+            [userId]
+        );
+
+        const user = users[0];
 
         if (!user) {
             return res.status(404).json({ message: 'undefined User' });
