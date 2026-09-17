@@ -379,3 +379,27 @@ export async function downloadRib(req, res) {
     }
 };
 
+export async function getBeneficiaires(req, res) {
+    try {
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
+        }
+
+
+        const beneficiaires = await connection('Bénéficiaire')
+            .where({ clientId: userId })
+            .select('id', 'nom', 'prenom', 'iban', 'banque');
+
+
+        return res.status(200).json({
+            beneficiaires
+        });
+
+    } catch (error) {
+
+        console.error('Error about get beneficiaires', error);
+        return res.status(500).json({ message: 'error in server' });
+    }
+};
