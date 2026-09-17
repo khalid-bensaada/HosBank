@@ -1,4 +1,5 @@
 import {connection} from "../config/database.js";
+import { v4 as uuidv4 } from 'uuid';
 
 export async function getUserInfo(req , res){
 
@@ -156,6 +157,97 @@ export async function getOperationDetails(req, res) {
     } catch (error) {
 
         console.error('Error about get operation details', error);
+        return res.status(500).json({ message: 'error in server' });
+    }
+};
+
+
+export async function createVirement(req, res) {
+    try {
+
+        const userId = req.user?.id;
+        const { compteSourceId, beneficiaireId, montant, motif } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
+        }
+
+        // verify if inputs is empty
+        const numericMontant = parseFloat(montant);
+        if (!compteSourceId || !beneficiaireId || isNaN(numericMontant) || numericMontant <= 0) {
+            return res.status(400).json({ message: 'Invalid inputs or montant must be greater than 0' });
+        }
+
+
+        const result = await connection.transaction(async (trx) => {
+
+            // verify user
+            const compteSource = await trx('Compte bancaire')
+                .where({ id: compteSourceId, clientId: userId })
+                .select('solde')
+                .first();
+
+            if (!compteSource) {
+                throw new Error('ACCOUNT_NOT_FOUND');
+            }
+
+            const soldeAvant = parseFloat(compteSource.solde);
+
+            // verify sold if is enought
+
+            if (soldeAvant < numericMontant) {
+                throw new Error('INSUFFICIENT_FUNDS');
+            }
+
+            const soldeApres = soldeAvant - numericMontant;
+            const reference = `VIR-${Date.now()}-${uuidv4().substring(0, 6).toUpperCase()}`;
+
+
+            await trx('Compte bancaire')
+                .where({ id: compteSourceId })
+                .update({ solde: soldeApres });
+
+
+            const [virementId] = await trx('Virement').insert({
+                compteSourceId,
+                beneficiaireId,
+                montant: numericMontant,
+                motif: motif || '',
+                reference,
+                dateVirement: new Date()
+            });
+
+
+            await trx('Opération').insert({
+                compteId: compteSourceId,
+                type: 'VIREMENT',
+                montant: -numericMontant,
+                soldeAvant,
+                soldeApres,
+                reference,
+                dateOperation: new Date()
+            });
+
+            return { reference, virementId, soldeApres };
+        });
+
+
+        return res.status(200).json({
+            message: 'Virement executed successfully',
+            reference: result.reference,
+            newSolde: result.soldeApres
+        });
+
+    } catch (error) {
+
+        if (error.message === 'ACCOUNT_NOT_FOUND') {
+            return res.status(404).json({ message: 'Source account not found or access denied' });
+        }
+        if (error.message === 'INSUFFICIENT_FUNDS') {
+            return res.status(400).json({ message: 'Solde insuffisant pour effectuer le virement' });
+        }
+
+        console.error('Error executing virement', error);
         return res.status(500).json({ message: 'error in server' });
     }
 };
