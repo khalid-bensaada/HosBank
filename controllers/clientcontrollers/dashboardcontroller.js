@@ -78,3 +78,41 @@ export async function getPatrimoineTotal(req, res){
         return res.status(500).json({ message: 'error in server'});
     }
 };
+
+export async function getRecentOperations(req, res) {
+    try {
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
+        }
+
+        // get last 6 opérations
+        const operations = await connection('Opération')
+            .join('Compte bancaire', 'Opération.compteId', '=', 'Compte bancaire.id')
+            .where('Compte bancaire.clientId', userId)
+            .select(
+                'Opération.*',
+                'Compte bancaire.numeroCompte'
+            )
+            .orderBy('Opération.dateOperation', 'desc')
+            .limit(6);
+
+
+        const categorizedOperations = operations.map(operation => {
+            return {
+                ...operation,
+                category: categorizeOperation(operation)
+            };
+        });
+
+        return res.status(200).json({
+            operations: categorizedOperations
+        });
+
+    } catch (error) {
+
+        console.error('Error about get user operations', error);
+        return res.status(500).json({ message: 'error in server' });
+    }
+};
