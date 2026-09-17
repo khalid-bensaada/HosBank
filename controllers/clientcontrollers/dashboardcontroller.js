@@ -1,5 +1,6 @@
 import {connection} from "../config/database.js";
 import { v4 as uuidv4 } from 'uuid';
+import PDFDocument from 'pdfkit';
 
 export async function getUserInfo(req , res){
 
@@ -310,3 +311,71 @@ export async function createCarteVirtuelle(req, res) {
         return res.status(500).json({ message: 'error in server' });
     }
 };
+
+export async function downloadRib(req, res) {
+    try {
+        const userId = req.user?.id;
+        const { compteId } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
+        }
+
+        if (!compteId) {
+            return res.status(400).json({ message: 'Compte ID is required' });
+        }
+
+
+        const data = await connection('Compte bancaire')
+            .join('Utilisateurs', 'Compte bancaire.clientId', '=', 'Utilisateurs.id')
+            .where({
+                'Compte bancaire.id': compteId,
+                'Compte bancaire.clientId': userId
+            })
+            .select(
+                'Compte bancaire.iban',
+                'Compte bancaire.numeroCompte',
+                'Compte bancaire.typedecompte',
+                'Utilisateurs.nom',
+                'Utilisateurs.prenom'
+            )
+            .first();
+
+        if (!data) {
+            return res.status(404).json({ message: 'Account not found or access denied' });
+        }
+
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=RIB_${data.numeroCompte}.pdf`);
+
+
+        const doc = new PDFDocument({ margin: 50 });
+        doc.pipe(res);
+
+
+        doc.fontSize(20).text('Relevé d Identity Bancaire (RIB)', { align: 'center' });
+        doc.moveDown(2);
+
+        doc.fontSize(12).text(`Titulaire du compte: ${data.nom} ${data.prenom}`);
+        doc.text(`Type de compte: ${data.typedecompte}`);
+        doc.moveDown();
+
+        doc.fontSize(14).text('Informations Bancaires:', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(12).text(`Numéro de Compte: ${data.numeroCompte}`);
+        doc.text(`IBAN: ${data.iban}`);
+        doc.moveDown(2);
+
+        doc.fontSize(10).text('Document généré automatiquement par le système bancaire.', { align: 'center', italic: true });
+
+
+        doc.end();
+
+    } catch (error) {
+
+        console.error('Error downloading RIB', error);
+        return res.status(500).json({ message: 'error in server' });
+    }
+};
+
