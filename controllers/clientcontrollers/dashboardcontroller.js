@@ -52,4 +52,29 @@ export async function getComptes(req, res){
     }
 };
 
+export async function getPatrimoineTotal(req, res){
 
+    try{
+
+        const userId = req.user?.id;
+
+        if(!userId) {
+            return res.status(401).json({message: 'The Access is impossible'});
+        }
+
+        const result = await connection('Compte bancaire')
+            .where({ clientId: userId })
+            .sum('solde as total');
+
+        const total = parseFloat(result[0]?.total) || 0;
+
+        return res.status(200).json({
+            patrimoineTotal: total
+        });
+    }
+    catch (error){
+
+        console.error('Error about get user',error);
+        return res.status(500).json({ message: 'error in server'});
+    }
+};
