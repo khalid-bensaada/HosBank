@@ -251,3 +251,62 @@ export async function createVirement(req, res) {
         return res.status(500).json({ message: 'error in server' });
     }
 };
+
+export async function createCarteVirtuelle(req, res) {
+    try {
+        const userId = req.user?.id;
+        const { compteId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
+        }
+
+        if (!compteId) {
+            return res.status(400).json({ message: 'Compte ID is required' });
+        }
+
+        // check user
+        const compte = await connection('Compte bancaire')
+            .where({ id: compteId, clientId: userId })
+            .first();
+
+        if (!compte) {
+            return res.status(404).json({ message: 'Account not found or access denied' });
+        }
+
+        // add the card with 3 random numbers
+        const numeroCarte = generateCardNumber();
+        const cvv = Math.floor(100 + Math.random() * 900).toString();
+
+        const dateExpiration = new Date();
+        // add 3 years to card
+        dateExpiration.setFullYear(dateExpiration.getFullYear() + 3);
+
+
+        const newCard = {
+            compteId,
+            numeroCarte,
+            cvv,
+            dateExpiration,
+            type: 'VIRTUELLE',
+            isBlocked: false,
+            createdAt: new Date()
+        };
+
+        const [carteId] = await connection('Carte bancaire').insert(newCard);
+
+
+        return res.status(201).json({
+            message: 'Virtual card created successfully',
+            carte: {
+                id: carteId,
+                ...newCard
+            }
+        });
+
+    } catch (error) {
+
+        console.error('Error creating virtual card', error);
+        return res.status(500).json({ message: 'error in server' });
+    }
+};
