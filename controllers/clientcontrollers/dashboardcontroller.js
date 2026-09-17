@@ -2,66 +2,83 @@ import {connection} from "../config/database.js";
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
 
-export async function getUserInfo(req , res){
 
-    try{
 
+function categorizeOperation(operation) {
+    const desc = (operation.description || '').toLowerCase();
+
+    if (desc.includes('salaire') || desc.includes('lumina')) return 'Revenus';
+    if (desc.includes('restaurant') || desc.includes('boulangerie')) return 'Restauration';
+    if (desc.includes('marché') || desc.includes('bio') || desc.includes('alimentation')) return 'Alimentation';
+    if (desc.includes('spotify') || desc.includes('abonnement')) return 'Abonnement';
+    if (desc.includes('remboursement') || desc.includes('transfert')) return 'Transfert';
+    if (desc.includes('sncf') || desc.includes('voyage')) return 'Voyages';
+
+    return 'Autre';
+}
+
+function generateCardNumber() {
+    let number = '';
+    for (let i = 0; i < 16; i++) {
+        number += Math.floor(Math.random() * 10);
+    }
+    return number;
+}
+
+
+
+export async function getUserInfo(req, res) {
+    try {
         const userId = req.user?.id;
 
-        if(!userId) {
-            return res.status(401).json({message: 'The Access is impossible'});
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
         }
 
-        const user = await connection('utilisateur')
-            .select('nom','prenom')
+        const user = await connection('Utilisateur')
+            .select('nom', 'prenom')
             .where({ id: userId })
+            .first();
 
-        if(!user){
-            return res.status(404).json({ message: 'undefined User'});
+        if (!user) {
+            return res.status(404).json({ message: 'undefined User' });
         }
 
         return res.status(200).json({
             nom: user.nom,
             prenom: user.prenom
         });
-    }
-    catch (error){
-        console.error('Error about get user',error);
-        return res.status(500).json({ message: 'error in server'});
+    } catch (error) {
+        console.error('Error about get user', error);
+        return res.status(500).json({ message: 'error in server' });
     }
 };
 
-export async function getComptes(req, res){
-
-    try{
+export async function getComptes(req, res) {
+    try {
         const userId = req.user?.id;
 
-        if(!userId) {
-            return res.status(401).json({message: 'The Access is impossible'});
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
         }
 
         const comptes = await connection('Compte bancaire')
-            .select('numeroCompte', 'iban', 'typedecompte', 'solde')
+            .select('id', 'numeroCompte', 'iban', 'typedecompte', 'solde', 'status')
             .where({ clientId: userId });
 
-        return res.status(200).json(comptes)
-    }
-    catch (error){
-
-        console.error('Error about get user',error);
-        return res.status(500).json({ message: 'error in server'});
-
+        return res.status(200).json(comptes);
+    } catch (error) {
+        console.error('Error about get comptes', error);
+        return res.status(500).json({ message: 'error in server' });
     }
 };
 
-export async function getPatrimoineTotal(req, res){
-
-    try{
-
+export async function getPatrimoineTotal(req, res) {
+    try {
         const userId = req.user?.id;
 
-        if(!userId) {
-            return res.status(401).json({message: 'The Access is impossible'});
+        if (!userId) {
+            return res.status(401).json({ message: 'The Access is impossible' });
         }
 
         const result = await connection('Compte bancaire')
@@ -73,11 +90,9 @@ export async function getPatrimoineTotal(req, res){
         return res.status(200).json({
             patrimoineTotal: total
         });
-    }
-    catch (error){
-
-        console.error('Error about get user',error);
-        return res.status(500).json({ message: 'error in server'});
+    } catch (error) {
+        console.error('Error about get patrimoine', error);
+        return res.status(500).json({ message: 'error in server' });
     }
 };
 
@@ -89,7 +104,6 @@ export async function getRecentOperations(req, res) {
             return res.status(401).json({ message: 'The Access is impossible' });
         }
 
-        // get last 6 opérations
         const operations = await connection('Opération')
             .join('Compte bancaire', 'Opération.compteId', '=', 'Compte bancaire.id')
             .where('Compte bancaire.clientId', userId)
@@ -99,7 +113,6 @@ export async function getRecentOperations(req, res) {
             )
             .orderBy('Opération.dateOperation', 'desc')
             .limit(6);
-
 
         const categorizedOperations = operations.map(operation => {
             return {
@@ -111,10 +124,8 @@ export async function getRecentOperations(req, res) {
         return res.status(200).json({
             operations: categorizedOperations
         });
-
     } catch (error) {
-
-        console.error('Error about get user operations', error);
+        console.error('Error about get recent operations', error);
         return res.status(500).json({ message: 'error in server' });
     }
 };
@@ -132,7 +143,6 @@ export async function getOperationDetails(req, res) {
             return res.status(400).json({ message: 'Operation ID is required' });
         }
 
-
         const operation = await connection('Opération')
             .join('Compte bancaire', 'Opération.compteId', '=', 'Compte bancaire.id')
             .where({
@@ -146,26 +156,19 @@ export async function getOperationDetails(req, res) {
             )
             .first();
 
-
         if (!operation) {
             return res.status(404).json({ message: 'Operation not found or access denied' });
         }
 
-        return res.status(200).json({
-            operation
-        });
-
+        return res.status(200).json({ operation });
     } catch (error) {
-
         console.error('Error about get operation details', error);
         return res.status(500).json({ message: 'error in server' });
     }
 };
 
-
 export async function createVirement(req, res) {
     try {
-
         const userId = req.user?.id;
         const { compteSourceId, beneficiaireId, montant, motif } = req.body;
 
@@ -173,16 +176,13 @@ export async function createVirement(req, res) {
             return res.status(401).json({ message: 'The Access is impossible' });
         }
 
-        // verify if inputs is empty
         const numericMontant = parseFloat(montant);
         if (!compteSourceId || !beneficiaireId || isNaN(numericMontant) || numericMontant <= 0) {
             return res.status(400).json({ message: 'Invalid inputs or montant must be greater than 0' });
         }
 
-
         const result = await connection.transaction(async (trx) => {
 
-            // verify user
             const compteSource = await trx('Compte bancaire')
                 .where({ id: compteSourceId, clientId: userId })
                 .select('solde')
@@ -194,8 +194,6 @@ export async function createVirement(req, res) {
 
             const soldeAvant = parseFloat(compteSource.solde);
 
-            // verify sold if is enought
-
             if (soldeAvant < numericMontant) {
                 throw new Error('INSUFFICIENT_FUNDS');
             }
@@ -203,35 +201,31 @@ export async function createVirement(req, res) {
             const soldeApres = soldeAvant - numericMontant;
             const reference = `VIR-${Date.now()}-${uuidv4().substring(0, 6).toUpperCase()}`;
 
-
             await trx('Compte bancaire')
                 .where({ id: compteSourceId })
                 .update({ solde: soldeApres });
 
-
             const [virementId] = await trx('Virement').insert({
-                compteSourceId,
-                beneficiaireId,
+                reference,
                 montant: numericMontant,
                 motif: motif || '',
-                reference,
-                dateVirement: new Date()
+                statut: 'terminé',
+                compteSourceId,
+                beneficiaireId
             });
 
-
             await trx('Opération').insert({
-                compteId: compteSourceId,
-                type: 'VIREMENT',
+                typeOperation: 'VIREMENT',
                 montant: -numericMontant,
                 soldeAvant,
                 soldeApres,
-                reference,
-                dateOperation: new Date()
+                description: motif || 'Virement',
+                compteId: compteSourceId,
+                virmentId: virementId
             });
 
             return { reference, virementId, soldeApres };
         });
-
 
         return res.status(200).json({
             message: 'Virement executed successfully',
@@ -240,7 +234,6 @@ export async function createVirement(req, res) {
         });
 
     } catch (error) {
-
         if (error.message === 'ACCOUNT_NOT_FOUND') {
             return res.status(404).json({ message: 'Source account not found or access denied' });
         }
@@ -266,7 +259,6 @@ export async function createCarteVirtuelle(req, res) {
             return res.status(400).json({ message: 'Compte ID is required' });
         }
 
-        // check user
         const compte = await connection('Compte bancaire')
             .where({ id: compteId, clientId: userId })
             .first();
@@ -275,27 +267,20 @@ export async function createCarteVirtuelle(req, res) {
             return res.status(404).json({ message: 'Account not found or access denied' });
         }
 
-        // add the card with 3 random numbers
-        const numeroCarte = generateCardNumber();
-        const cvv = Math.floor(100 + Math.random() * 900).toString();
+        const numerodeCart = generateCardNumber();
 
-        const dateExpiration = new Date();
-        // add 3 years to card
-        dateExpiration.setFullYear(dateExpiration.getFullYear() + 3);
-
+        const dateExperation = new Date();
+        dateExperation.setFullYear(dateExperation.getFullYear() + 3);
 
         const newCard = {
-            compteId,
-            numeroCarte,
-            cvv,
-            dateExpiration,
-            type: 'VIRTUELLE',
-            isBlocked: false,
-            createdAt: new Date()
+            numerodeCart,
+            dateExperation,
+            typeCarte: 'VIRTUELLE',
+            status: 'active',
+            compteId
         };
 
         const [carteId] = await connection('Carte bancaire').insert(newCard);
-
 
         return res.status(201).json({
             message: 'Virtual card created successfully',
@@ -306,7 +291,6 @@ export async function createCarteVirtuelle(req, res) {
         });
 
     } catch (error) {
-
         console.error('Error creating virtual card', error);
         return res.status(500).json({ message: 'error in server' });
     }
@@ -325,9 +309,8 @@ export async function downloadRib(req, res) {
             return res.status(400).json({ message: 'Compte ID is required' });
         }
 
-
         const data = await connection('Compte bancaire')
-            .join('Utilisateurs', 'Compte bancaire.clientId', '=', 'Utilisateurs.id')
+            .join('Utilisateur', 'Compte bancaire.clientId', '=', 'Utilisateur.id')
             .where({
                 'Compte bancaire.id': compteId,
                 'Compte bancaire.clientId': userId
@@ -336,8 +319,8 @@ export async function downloadRib(req, res) {
                 'Compte bancaire.iban',
                 'Compte bancaire.numeroCompte',
                 'Compte bancaire.typedecompte',
-                'Utilisateurs.nom',
-                'Utilisateurs.prenom'
+                'Utilisateur.nom',
+                'Utilisateur.prenom'
             )
             .first();
 
@@ -345,14 +328,11 @@ export async function downloadRib(req, res) {
             return res.status(404).json({ message: 'Account not found or access denied' });
         }
 
-
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=RIB_${data.numeroCompte}.pdf`);
 
-
         const doc = new PDFDocument({ margin: 50 });
         doc.pipe(res);
-
 
         doc.fontSize(20).text('Relevé d Identity Bancaire (RIB)', { align: 'center' });
         doc.moveDown(2);
@@ -369,11 +349,9 @@ export async function downloadRib(req, res) {
 
         doc.fontSize(10).text('Document généré automatiquement par le système bancaire.', { align: 'center', italic: true });
 
-
         doc.end();
 
     } catch (error) {
-
         console.error('Error downloading RIB', error);
         return res.status(500).json({ message: 'error in server' });
     }
@@ -387,18 +365,13 @@ export async function getBeneficiaires(req, res) {
             return res.status(401).json({ message: 'The Access is impossible' });
         }
 
-
         const beneficiaires = await connection('Bénéficiaire')
             .where({ clientId: userId })
-            .select('id', 'nom', 'prenom', 'iban', 'banque');
+            .select('id', 'nomComplet', 'iban', 'nomBanque', 'statut');
 
-
-        return res.status(200).json({
-            beneficiaires
-        });
+        return res.status(200).json({ beneficiaires });
 
     } catch (error) {
-
         console.error('Error about get beneficiaires', error);
         return res.status(500).json({ message: 'error in server' });
     }
