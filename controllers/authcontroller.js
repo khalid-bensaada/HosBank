@@ -14,6 +14,18 @@ export function showLogin(req, res){
     res.render("auth/login");
 }
 
+export function logout(req, res) {
+    req.session.destroy((error) => {
+        if (error) {
+            console.error("Logout error:", error);
+            return res.status(500).send("Server error");
+        }
+
+        res.clearCookie("connect.sid");
+        return res.redirect("/auth/login");
+    });
+}
+
 // function of register
 
 export async function register(req, res){

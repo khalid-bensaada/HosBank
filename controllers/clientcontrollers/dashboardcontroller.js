@@ -11,7 +11,7 @@ export async function showDashboard(req, res) {
         }
 
         const [users] = await connection.query(
-            "SELECT id, nom, prenom FROM utilisateur WHERE id = ?",
+            "SELECT id, nom, prenom, email, telephone, adresse FROM utilisateur WHERE id = ?",
             [userId]
         );
 

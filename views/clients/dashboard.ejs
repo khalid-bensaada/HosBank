@@ -1,39 +1,171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="description" content="Tableau de bord client HosBank">
+    <title>Tableau de bord | HosBank</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
 </head>
-<body class="bg-[#f7f8fc]">
+<body class="dashboard-page">
     <%- include("../components/navbar", {activePage: "dashboard"}) %>
 
-    <main class="pt-1">
-        <div class="info-user mx-2 flex min-h-14 items-center justify-between gap-4 border  bg-white px-4 py-3">
-            <div id="msg-user">
-                <h1 class="text-sm font-semibold text-[#071c3b]">
-                    Bonjour, <%= user.prenom.charAt(0).toUpperCase() + user.prenom.slice(1).toLowerCase() %>
-                </h1>
+    <main class="dashboard-shell">
+        <section class="welcome-card" aria-labelledby="welcome-title">
+            <div class="welcome-copy">
+                <h1 id="welcome-title">Bonjour, <span><%= user.prenom %></span></h1>
+                <p>Bienvenue dans votre espace bancaire personnel.</p>
             </div>
 
-            <div class="btn-side flex shrink-0 items-center gap-2">
-                <button
-                    id="btn-telecharger"
-                    type="button"
-                    class="rounded-md bg-[#eff4ff] px-3 py-2 text-[10px] font-medium text-[#004ac6] transition-colors hover:bg-[#dfe9ff]"
-                >
-                    T&eacute;l&eacute;charger RIB
-                </button>
-                <button
-                    id="btn-virement"
-                    type="button"
-                    class="rounded-md bg-[#004ac6] px-3 py-2 text-[10px] font-medium text-white transition-colors hover:bg-[#003da3]"
-                >
-                    Virement
-                </button>
+            <div class="logged-user" aria-label="Utilisateur connect&eacute;">
+                <span class="logged-user-avatar" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span class="logged-user-copy">
+                    <strong><%= user.prenom %> <%= user.nom %></strong>
+                    <small><%= user.email %></small>
+                </span>
+                <span class="session-status"><i></i> Connect&eacute;</span>
             </div>
-        </div>
+        </section>
+
+        <section class="balance-grid" aria-label="Vue d'ensemble des comptes">
+            <article class="balance-card">
+                <div class="balance-heading">
+                    <p class="balance-label">Compte courant</p>
+                    <span class="balance-icon balance-icon-blue" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9h16M6 9V7l6-3 6 3v2M6 18h12M8 9v7m4-7v7m4-7v7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </div>
+                <p class="balance-value">3&#8239;420,50 <span>MAD</span></p>
+            </article>
+
+            <article class="balance-card">
+                <div class="balance-heading">
+                    <p class="balance-label">Livret Hos+</p>
+                    <span class="balance-icon balance-icon-violet" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v10m3-7.5c0-1.1-1.34-2-3-2s-3 .9-3 2 1.34 2 3 2 3 .9 3 2-1.34 2-3 2-3-.9-3-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                    </span>
+                </div>
+                <p class="balance-value">12&#8239;850,00 <span>MAD</span></p>
+            </article>
+
+            <article class="balance-card">
+                <div class="balance-heading">
+                    <p class="balance-label">Patrimoine net total</p>
+                    <span class="balance-icon balance-icon-green" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="m4 16 5-5 4 3 7-8M15 6h5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </div>
+                <p class="balance-value">16&#8239;950,70 <span>MAD</span></p>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <article class="transactions-card">
+                <header class="card-header">
+                    <div>
+                        <h2>Transactions r&eacute;centes</h2>
+                        <p>Aper&ccedil;u de vos derni&egrave;res op&eacute;rations</p>
+                    </div>
+                </header>
+
+                <div class="table-wrap">
+                    <table class="transactions-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date &amp; heure</th>
+                                <th scope="col">Op&eacute;ration &amp; marchand</th>
+                                <th scope="col">Cat&eacute;gorie</th>
+                                <th scope="col">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td data-label="Date"><span class="date-main">Aujourd&rsquo;hui</span><span class="date-time">11:24</span></td>
+                                <td data-label="Op&eacute;ration"><span class="merchant">Biocoop March&eacute; Bio</span></td>
+                                <td data-label="Cat&eacute;gorie"><span class="category category-food">Alimentation</span></td>
+                                <td data-label="Montant"><span class="amount amount-debit">&minus;42,80 MAD</span></td>
+                            </tr>
+                            <tr>
+                                <td data-label="Date"><span class="date-main">Hier</span><span class="date-time">08:30</span></td>
+                                <td data-label="Op&eacute;ration"><span class="merchant">Soci&eacute;t&eacute; Lumina (Salaire)</span></td>
+                                <td data-label="Cat&eacute;gorie"><span class="category category-income">Revenus</span></td>
+                                <td data-label="Montant"><span class="amount amount-credit">+2&#8239;000 MAD</span></td>
+                            </tr>
+                            <tr>
+                                <td data-label="Date"><span class="date-main">24 Mai</span><span class="date-time">09:12</span></td>
+                                <td data-label="Op&eacute;ration"><span class="merchant">Boulangerie des Lilas</span></td>
+                                <td data-label="Cat&eacute;gorie"><span class="category category-restaurant">Restauration</span></td>
+                                <td data-label="Montant"><span class="amount amount-debit">&minus;4,50 MAD</span></td>
+                            </tr>
+                            <tr>
+                                <td data-label="Date"><span class="date-main">22 Mai</span><span class="date-time">04:00</span></td>
+                                <td data-label="Op&eacute;ration"><span class="merchant">Spotify Music &amp; Media</span></td>
+                                <td data-label="Cat&eacute;gorie"><span class="category category-subscription">Abonnement</span></td>
+                                <td data-label="Montant"><span class="amount amount-debit">&minus;10,99 MAD</span></td>
+                            </tr>
+                            <tr>
+                                <td data-label="Date"><span class="date-main">20 Mai</span><span class="date-time">19:45</span></td>
+                                <td data-label="Op&eacute;ration"><span class="merchant">Remboursement Thomas D.</span></td>
+                                <td data-label="Cat&eacute;gorie"><span class="category category-transfer">Transfert</span></td>
+                                <td data-label="Montant"><span class="amount amount-credit">+35,00 MAD</span></td>
+                            </tr>
+                            <tr>
+                                <td data-label="Date"><span class="date-main">18 Mai</span><span class="date-time">14:15</span></td>
+                                <td data-label="Op&eacute;ration"><span class="merchant">SNCF Connect - TGV</span></td>
+                                <td data-label="Cat&eacute;gorie"><span class="category category-travel">Voyages</span></td>
+                                <td data-label="Montant"><span class="amount amount-debit">&minus;79,00 MAD</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <aside class="profile-card" aria-labelledby="profile-title">
+                <header class="profile-header">
+                    <div class="profile-title-wrap">
+                        <span class="section-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        </span>
+                        <h2 id="profile-title">Informations du profil</h2>
+                    </div>
+                </header>
+
+                <div class="profile-identity">
+                    <span class="profile-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                    </span>
+                    <div>
+                        <strong><%= user.prenom %> <%= user.nom %></strong>
+                        <span>Client HosBank</span>
+                    </div>
+                </div>
+
+                <dl class="profile-details">
+                    <div>
+                        <dt>Adresse e-mail</dt>
+                        <dd><%= user.email %></dd>
+                    </div>
+                    <div>
+                        <dt>T&eacute;l&eacute;phone</dt>
+                        <dd><%= user.telephone || "Non renseigné" %></dd>
+                    </div>
+                    <div>
+                        <dt>Adresse</dt>
+                        <dd><%= user.adresse || "Non renseignée" %></dd>
+                    </div>
+                </dl>
+
+                <div class="security-note">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 5 6v5c0 4.7 2.9 8.3 7 10 4.1-1.7 7-5.3 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <p><strong>Espace s&eacute;curis&eacute;</strong><span>Vos donn&eacute;es sont prot&eacute;g&eacute;es</span></p>
+                </div>
+            </aside>
+        </section>
     </main>
 </body>
 </html>
