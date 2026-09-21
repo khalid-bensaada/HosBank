@@ -17,19 +17,6 @@
                 <h1 id="welcome-title">Bonjour, <span><%= user.prenom %></span></h1>
                 <p>Bienvenue dans votre espace bancaire personnel.</p>
             </div>
-
-            <div class="logged-user" aria-label="Utilisateur connect&eacute;">
-                <span class="logged-user-avatar" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="logged-user-copy">
-                    <strong><%= user.prenom %> <%= user.nom %></strong>
-                    <small><%= user.email %></small>
-                </span>
-                <span class="session-status"><i></i> Connect&eacute;</span>
-            </div>
         </section>
 
         <section class="balance-grid" aria-label="Vue d'ensemble des comptes">
@@ -40,7 +27,7 @@
                         <svg viewBox="0 0 24 24" fill="none"><path d="M4 9h16M6 9V7l6-3 6 3v2M6 18h12M8 9v7m4-7v7m4-7v7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
                 </div>
-                <p class="balance-value">3&#8239;420,50 <span>MAD</span></p>
+                <p class="balance-value">0 <span>MAD</span></p>
             </article>
 
             <article class="balance-card">
@@ -50,7 +37,7 @@
                         <svg viewBox="0 0 24 24" fill="none"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v10m3-7.5c0-1.1-1.34-2-3-2s-3 .9-3 2 1.34 2 3 2 3 .9 3 2-1.34 2-3 2-3-.9-3-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                     </span>
                 </div>
-                <p class="balance-value">12&#8239;850,00 <span>MAD</span></p>
+                <p class="balance-value">0 <span>MAD</span></p>
             </article>
 
             <article class="balance-card">
@@ -60,7 +47,7 @@
                         <svg viewBox="0 0 24 24" fill="none"><path d="m4 16 5-5 4 3 7-8M15 6h5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
                 </div>
-                <p class="balance-value">16&#8239;950,70 <span>MAD</span></p>
+                <p class="balance-value">0 <span>MAD</span></p>
             </article>
         </section>
 
@@ -89,36 +76,6 @@
                                 <td data-label="Op&eacute;ration"><span class="merchant">Biocoop March&eacute; Bio</span></td>
                                 <td data-label="Cat&eacute;gorie"><span class="category category-food">Alimentation</span></td>
                                 <td data-label="Montant"><span class="amount amount-debit">&minus;42,80 MAD</span></td>
-                            </tr>
-                            <tr>
-                                <td data-label="Date"><span class="date-main">Hier</span><span class="date-time">08:30</span></td>
-                                <td data-label="Op&eacute;ration"><span class="merchant">Soci&eacute;t&eacute; Lumina (Salaire)</span></td>
-                                <td data-label="Cat&eacute;gorie"><span class="category category-income">Revenus</span></td>
-                                <td data-label="Montant"><span class="amount amount-credit">+2&#8239;000 MAD</span></td>
-                            </tr>
-                            <tr>
-                                <td data-label="Date"><span class="date-main">24 Mai</span><span class="date-time">09:12</span></td>
-                                <td data-label="Op&eacute;ration"><span class="merchant">Boulangerie des Lilas</span></td>
-                                <td data-label="Cat&eacute;gorie"><span class="category category-restaurant">Restauration</span></td>
-                                <td data-label="Montant"><span class="amount amount-debit">&minus;4,50 MAD</span></td>
-                            </tr>
-                            <tr>
-                                <td data-label="Date"><span class="date-main">22 Mai</span><span class="date-time">04:00</span></td>
-                                <td data-label="Op&eacute;ration"><span class="merchant">Spotify Music &amp; Media</span></td>
-                                <td data-label="Cat&eacute;gorie"><span class="category category-subscription">Abonnement</span></td>
-                                <td data-label="Montant"><span class="amount amount-debit">&minus;10,99 MAD</span></td>
-                            </tr>
-                            <tr>
-                                <td data-label="Date"><span class="date-main">20 Mai</span><span class="date-time">19:45</span></td>
-                                <td data-label="Op&eacute;ration"><span class="merchant">Remboursement Thomas D.</span></td>
-                                <td data-label="Cat&eacute;gorie"><span class="category category-transfer">Transfert</span></td>
-                                <td data-label="Montant"><span class="amount amount-credit">+35,00 MAD</span></td>
-                            </tr>
-                            <tr>
-                                <td data-label="Date"><span class="date-main">18 Mai</span><span class="date-time">14:15</span></td>
-                                <td data-label="Op&eacute;ration"><span class="merchant">SNCF Connect - TGV</span></td>
-                                <td data-label="Cat&eacute;gorie"><span class="category category-travel">Voyages</span></td>
-                                <td data-label="Montant"><span class="amount amount-debit">&minus;79,00 MAD</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -159,11 +116,6 @@
                         <dd><%= user.adresse || "Non renseignée" %></dd>
                     </div>
                 </dl>
-
-                <div class="security-note">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 5 6v5c0 4.7 2.9 8.3 7 10 4.1-1.7 7-5.3 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <p><strong>Espace s&eacute;curis&eacute;</strong><span>Vos donn&eacute;es sont prot&eacute;g&eacute;es</span></p>
-                </div>
             </aside>
         </section>
     </main>
