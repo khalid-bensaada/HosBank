@@ -10,6 +10,46 @@ export async function getDashboardStats(req ,res){
             });
         }
 
+        const totalUsers = await User.count();
+
+        const totalAccounts = await Account.count();
+
+        const totalMoney = await Account.sum('balance') || 0;
+
+        const startOfToday = dayjs().startOf('day').toDate();
+
+        const todayVirments = await Transaction.count({
+            where: {
+                createdAt: {
+                    [Op.gte]: startOfToday
+                }
+            }
+        });
+
+        const startOfMonth = dayjs().startOf('month').toDate();
+
+        const monthVirments = await Transaction.count({
+            where: {
+                createdAt: {
+                    [Op.gte]: startOfMonth
+                }
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                totalUsers,
+                totalAccounts,
+                totalMoney,
+                todayVirments,
+                monthVirments
+            }
+        });
+
+
+
+
     }
     catch(error){
 
