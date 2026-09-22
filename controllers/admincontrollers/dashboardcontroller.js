@@ -1,6 +1,28 @@
 import dayjs from "dayjs";
 import {connection} from "../config/database.js";
 
+export async function renderAdminDashboard(req ,res){
+
+    try{
+
+        if(!req.user){
+            return res.redirect('/login');
+        }
+
+        return res.render('admin/dashboard', {
+            title: 'Dashboard',
+            user: req.user
+        });
+    }
+    catch(error){
+        return res.status(500).json({
+            success: false,
+            message:  "something wrong here",
+            error: error.message
+        });
+    }
+}
+
 export async function getDashboardStats(req ,res){
     try{
 
@@ -52,6 +74,10 @@ export async function getDashboardStats(req ,res){
 
     }
     catch(error){
-
+        return res.status(500).json({
+            success: false,
+            message:  "something wrong here",
+            error: error.message
+        });
     }
 }
