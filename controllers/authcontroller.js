@@ -42,7 +42,6 @@ export async function register(req, res){
         const [users] = await connection.query(
             "select * from utilisateur where email = ?", [email]
         );
-
         if(users.length > 0){
             return res.status(400).render("auth/register", {
                 error : "email already exists !"

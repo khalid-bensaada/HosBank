@@ -1,0 +1,286 @@
+<!-- views/beneficiaires.ejs -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Mes bénéficiaires</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+<!-- Navigation Bar -->
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="text-xl font-extrabold text-[#2563EB]">HosBank</div>
+        <nav class="flex items-center space-x-6 text-sm font-medium text-gray-600">
+            <a href="/dashboard" class="hover:text-gray-900">Dashboard</a>
+            <a href="/dashboard/comptes" class="hover:text-gray-900">Comptes</a>
+            <a href="/dashboard/beneficiaires" class="bg-[#EEF2FF] text-[#2563EB] px-4 py-1.5 rounded-full font-semibold">Bénéficiaires</a>
+            <a href="/dashboard/virements" class="hover:text-gray-900">Virements</a>
+            <a href="/dashboard/historique" class="hover:text-gray-900">Historique</a>
+            <a href="/dashboard/cartes" class="hover:text-gray-900">Cartes</a>
+            <a href="/dashboard/reclamations" class="hover:text-gray-900">Réclamations</a>
+        </nav>
+    </div>
+</header>
+
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-[#0F172A]">Mes bénéficiaires</h1>
+        <button id="btnAdd" class="bg-[#2563EB] hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm transition">
+            Ajouter un bénéficiaire
+        </button>
+    </div>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Bénéficiaires enregistrés</p>
+            <p id="statActifs" class="text-xl font-bold text-[#0F172A]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Virements émis ce mois</p>
+            <p id="statVirements" class="text-xl font-bold text-[#10B981]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Délai d'activation</p>
+            <p class="text-xl font-bold text-[#2563EB]">Instantané</p>
+        </div>
+    </div>
+
+
+    <div class="bg-white rounded-2xl p-6 border border-gray-50 shadow-sm">
+
+        <p class="text-xs text-gray-400 font-medium mb-6">
+            Liste de vos contacts favoris <span id="countDisplayed" class="text-gray-400">(0 affichés)</span>
+        </p>
+
+        <div id="loadingState" class="text-center py-10 text-gray-400 text-sm">
+            Chargement des bénéficiaires...
+        </div>
+
+        <div id="emptyState" class="hidden text-center py-10 text-gray-400 text-sm">
+            Aucun bénéficiaire enregistré pour le moment.
+        </div>
+
+        <div id="beneficiairesList" class="space-y-6"></div>
+
+    </div>
+
+</main>
+
+
+<div id="addModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Ajouter un bénéficiaire</h2>
+        <form id="addForm" class="space-y-4">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Nom complet</label>
+                <input type="text" name="nomComplet" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">IBAN</label>
+                <input type="text" name="iban" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Banque</label>
+                <input type="text" name="nomBanque" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <p id="addError" class="hidden text-xs text-red-500"></p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" id="btnCancelAdd" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Annuler</button>
+                <button type="submit" class="bg-[#2563EB] hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg">Ajouter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/dashboard/api';
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            }
+        });
+
+        if (res.status === 401) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+
+        return res.json();
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatMontant(montant) {
+        return parseFloat(montant).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderBeneficiaireCard(b) {
+        const lastVirementHtml = b.dernierVirementDate
+            ? `
+                <div class="text-right hidden md:block">
+                    <span class="block text-[10px] text-gray-400">Dernier virement</span>
+                    <span class="text-xs font-semibold text-gray-600">
+                        ${formatDate(b.dernierVirementDate)} (${formatMontant(b.dernierMontant)} MAD)
+                    </span>
+                </div>
+            `
+            : `
+                <div class="text-right hidden md:block">
+                    <span class="block text-[10px] text-gray-400">Dernier virement</span>
+                    <span class="text-xs font-semibold text-gray-400">Aucun virement</span>
+                </div>
+            `;
+
+        return `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-gray-50 last:border-b-0 gap-4" data-id="${b.id}">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">${b.nomComplet}</h3>
+                    <p class="text-xs text-gray-400 mt-1 font-mono">${b.nomBanque || 'Banque inconnue'} &bull; ${b.iban}</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    ${lastVirementHtml}
+                    <div class="flex items-center space-x-2">
+                        <button onclick="handleVirer(${b.id})" class="bg-[#EEF2FF] text-[#2563EB] hover:bg-blue-100 text-xs font-medium px-4 py-1.5 rounded-md">Virer</button>
+                        <button onclick="handleModifier(${b.id})" class="bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100 text-xs font-medium px-4 py-1.5 rounded-md">modifier</button>
+                        <button onclick="handleSupprimer(${b.id})" class="bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100 text-xs font-medium px-4 py-1.5 rounded-md">supprimer</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadBeneficiaires() {
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        const listContainer = document.getElementById('beneficiairesList');
+        const countDisplay = document.getElementById('countDisplayed');
+
+        loadingState.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+
+        try {
+            const data = await fetchWithAuth(`${API_BASE}/beneficiaires`);
+            const beneficiaires = data.beneficiaires || [];
+
+            loadingState.classList.add('hidden');
+
+            if (beneficiaires.length === 0) {
+                emptyState.classList.remove('hidden');
+                listContainer.innerHTML = '';
+                countDisplay.textContent = '(0 affichés)';
+                return;
+            }
+
+            listContainer.innerHTML = beneficiaires.map(renderBeneficiaireCard).join('');
+            countDisplay.textContent = `(${beneficiaires.length} affichés)`;
+
+        } catch (error) {
+            loadingState.textContent = 'Erreur lors du chargement des bénéficiaires.';
+            console.error(error);
+        }
+    }
+
+    async function loadStats() {
+        try {
+            const data = await fetchWithAuth(`${API_BASE}/beneficiaires/stats`);
+            document.getElementById('statActifs').textContent = `${data.beneficiairesActifs} actifs`;
+            document.getElementById('statVirements').textContent = `${formatMontant(data.virementsCeMois)} MAD`;
+        } catch (error) {
+            document.getElementById('statActifs').textContent = '—';
+            document.getElementById('statVirements').textContent = '—';
+            console.error(error);
+        }
+    }
+
+    function handleVirer(id) {
+        window.location.href = `/dashboard/virements?beneficiaireId=${id}`;
+    }
+
+    function handleModifier(id) {
+
+        alert('Modifier bénéficiaire ID: ' + id);
+    }
+
+    async function handleSupprimer(id) {
+        if (!confirm('Voulez-vous vraiment supprimer ce bénéficiaire ?')) return;
+
+        try {
+            await fetchWithAuth(`${API_BASE}/beneficiaires/${id}`, { method: 'DELETE' });
+            await loadBeneficiaires();
+            await loadStats();
+        } catch (error) {
+            alert('Erreur lors de la suppression.');
+            console.error(error);
+        }
+    }
+
+
+    const addModal = document.getElementById('addModal');
+    const addForm = document.getElementById('addForm');
+    const addError = document.getElementById('addError');
+
+    document.getElementById('btnAdd').addEventListener('click', () => {
+        addForm.reset();
+        addError.classList.add('hidden');
+        addModal.classList.remove('hidden');
+    });
+
+    document.getElementById('btnCancelAdd').addEventListener('click', () => {
+        addModal.classList.add('hidden');
+    });
+
+    addForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        addError.classList.add('hidden');
+
+        const formData = new FormData(addForm);
+        const payload = {
+            nomComplet: formData.get('nomComplet'),
+            iban: formData.get('iban'),
+            nomBanque: formData.get('nomBanque') || null
+        };
+
+        try {
+            await fetchWithAuth(`${API_BASE}/beneficiaires`, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            addModal.classList.add('hidden');
+            await loadBeneficiaires();
+            await loadStats();
+
+        } catch (error) {
+            addError.textContent = error.message || 'Erreur lors de l\'ajout.';
+            addError.classList.remove('hidden');
+        }
+    });
+
+
+    loadBeneficiaires();
+    loadStats();
+</script>
+
+</body>
+</html>
