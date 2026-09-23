@@ -1,0 +1,205 @@
+<!-- views/admin/dashboard.ejs -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Tableau de bord administrateur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Dashboard</a>
+                <a href="/admin/utilisateurs" class="px-4 py-2 hover:text-gray-900">Utilisateurs</a>
+                <a href="/admin/comptes" class="px-4 py-2 hover:text-gray-900">Comptes</a>
+                <a href="/admin/cartes" class="px-4 py-2 hover:text-gray-900">Cartes</a>
+                <a href="/admin/virements" class="px-4 py-2 hover:text-gray-900">Virements</a>
+                <a href="/admin/reclamations" class="px-4 py-2 hover:text-gray-900">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+
+    <div class="flex items-start justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-[#0F172A]">Tableau de bord administrateur</h1>
+            <p class="text-sm text-gray-400 mt-1">Supervision globale de l'activité et transactions en temps réel.</p>
+        </div>
+        <div id="currentDate" class="bg-white border border-gray-100 shadow-sm rounded-lg px-4 py-2 text-sm text-gray-600 font-medium"> </div>
+    </div>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Total Utilisateurs</p>
+            <p id="statTotalUsers" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Total Comptes</p>
+            <p id="statTotalAccounts" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Solde Total</p>
+            <p id="statTotalMoney" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">Virements Aujourd'hui</p>
+            <p id="statTodayVirements" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+
+    </div>
+
+
+    <div class="bg-white rounded-2xl border border-gray-50 shadow-sm overflow-hidden">
+
+        <div class="px-6 py-5 border-b border-gray-50">
+            <h2 class="text-lg font-bold text-gray-900">Transactions récentes</h2>
+            <p class="text-xs text-gray-400 mt-1">Les 5 dernières opérations enregistrées sur le système HosBank</p>
+        </div>
+
+        <table class="w-full text-sm">
+            <thead>
+            <tr class="text-xs text-gray-400 border-b border-gray-50">
+                <th class="text-left font-medium px-6 py-3">Date &amp; Heure</th>
+                <th class="text-left font-medium px-6 py-3">Utilisateur / Bénéficiaire</th>
+                <th class="text-left font-medium px-6 py-3">Type</th>
+                <th class="text-right font-medium px-6 py-3">Montant</th>
+            </tr>
+            </thead>
+            <tbody id="transactionsBody">
+            <tr>
+                <td colspan="4" class="text-center py-10 text-gray-400">Chargement...</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-50 text-xs">
+            <span id="transactionsCount" class="text-gray-400">0 opérations affichées</span>
+            <a href="/admin/virements" class="text-[#2563EB] font-medium hover:underline">Voir tout l'historique →</a>
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = '/admin/api';
+
+    async function fetchWithAuth(url) {
+        const res = await fetch(url, { credentials: 'include' });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) throw new Error('Request failed');
+        return res.json();
+    }
+
+    function formatNumber(num) {
+        return parseInt(num).toLocaleString('fr-FR');
+    }
+
+    function formatMontant(montant) {
+        return parseFloat(montant).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatMoneyShort(montant) {
+        const num = parseFloat(montant);
+        if (num >= 1000000) {
+            return (num / 1000000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' M MAD';
+        }
+        return formatMontant(num) + ' MAD';
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) +
+            ', ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function setCurrentDate() {
+        const now = new Date();
+        const formatted = now.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+        document.getElementById('currentDate').textContent = ' ' + formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/dashboard/stats`);
+            const data = res.data;
+
+            document.getElementById('statTotalUsers').textContent = formatNumber(data.totalUsers);
+            document.getElementById('statTotalAccounts').textContent = formatNumber(data.totalAccounts);
+            document.getElementById('statTotalMoney').textContent = formatMoneyShort(data.totalMoney);
+            document.getElementById('statTodayVirements').textContent = formatNumber(data.todayVirements);
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function renderTransactionRow(tx) {
+        const isPositive = parseFloat(tx.montant) >= 0;
+        const montantClass = isPositive ? 'text-[#10B981]' : 'text-gray-900';
+        const montantSign = isPositive ? '+' : '';
+
+        return `
+            <tr class="border-b border-gray-50 last:border-b-0">
+                <td class="px-6 py-4 text-gray-500">${formatDate(tx.dateOperation)}</td>
+                <td class="px-6 py-4">
+                    <div class="font-semibold text-gray-900">${tx.nomComplet || '—'}</div>
+                    <div class="text-xs text-gray-400 font-mono">${tx.iban || ''}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="bg-[#EEF2FF] text-[#2563EB] text-xs font-medium px-3 py-1 rounded-full">${tx.typeOperation}</span>
+                </td>
+                <td class="px-6 py-4 text-right font-semibold ${montantClass}">${montantSign}${formatMontant(tx.montant)} MAD</td>
+            </tr>
+        `;
+    }
+
+    async function loadRecentTransactions() {
+        const tbody = document.getElementById('transactionsBody');
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/dashboard/recent-transactions`);
+            const transactions = res.data || [];
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-400">Aucune transaction récente.</td></tr>`;
+                document.getElementById('transactionsCount').textContent = '0 opérations affichées';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(renderTransactionRow).join('');
+            document.getElementById('transactionsCount').textContent = `${transactions.length} opérations affichées`;
+
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-red-400">Erreur lors du chargement.</td></tr>`;
+            console.error(error);
+        }
+    }
+
+
+    setCurrentDate();
+    loadStats();
+    loadRecentTransactions();
+</script>
+
+</body>
+</html>
