@@ -24,7 +24,7 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-    res.send("Bienvenue sur HosBank !");
+    res.render("home");
 });
 
 app.use("/admin", adminRoutes);

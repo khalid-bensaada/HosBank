@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Échec de la vérification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 max-w-sm w-full p-8">
+    <div class="flex justify-center mb-6">
+        <div class="w-16 h-16 rounded-full border-2 border-red-200 flex items-center justify-center">
+            <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </div>
+    </div>
+
+    <h1 class="text-2xl font-bold text-slate-900 text-center mb-3">Échec de la vérification</h1>
+
+    <p class="text-sm text-slate-500 text-center leading-relaxed mb-6">
+        Le lien de confirmation est expiré ou a déjà été utilisé.
+        Ne vous inquiétez pas, la sécurité de vos données est préservée.
+    </p>
+
+    <div class="bg-slate-50 rounded-xl p-4 mb-6">
+        <p class="text-sm font-semibold text-slate-800 mb-1">Que pouvez-vous faire ?</p>
+        <p class="text-sm text-slate-500 leading-relaxed">
+            Vous pouvez demander l'envoi immédiat d'un nouveau lien d'activation ou vérifier si votre compte
+            personnel est déjà actif.
+        </p>
+    </div>
+
+    <button
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl py-3 mb-4 transition-colors">
+        Renvoyer un lien de vérification
+    </button>
+
+    <div class="text-center">
+        <a href="#" class="text-sm text-slate-400 hover:text-slate-600">Retourner à la connexion</a>
+    </div>
+</div>
+</body>
+
+</html>

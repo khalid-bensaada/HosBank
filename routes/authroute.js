@@ -1,6 +1,6 @@
 import express from "express";
 
-import {showRegister, register, verifyEmail} from "../controllers/authcontroller.js";
+import {showRegister, showLogin, register, verifyEmail, login} from "../controllers/authcontroller.js";
 
 
 const router = express.Router();
@@ -9,6 +9,12 @@ const router = express.Router();
 router.get(
     "/register",
     showRegister
+);
+
+
+router.get(
+    "/login",
+    showLogin
 );
 
 
@@ -22,6 +28,14 @@ router.get(
     "/verify-email",
     verifyEmail
 );
+
+router.get(
+    "/login", showLogin
+)
+
+router.post(
+    "/login", login
+)
 
 
 

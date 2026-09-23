@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email vérifié avec succès</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+
+<main class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+    <div class="text-center">
+
+        <div class="mx-auto w-[66px] h-[66px] rounded-full bg-[#c4f9e9] flex items-center justify-center">
+            <div class="w-[51px] h-[51px] rounded-full bg-white flex items-center justify-center">
+                <svg class="w-6 h-6 text-[#219b80]" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12l5 5L19 7" />
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="mt-6 text-2xl font-bold text-slate-900">
+            Email vérifié avec succès
+        </h1>
+
+        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+            Votre adresse e-mail a bien été confirmée. Votre
+            <br>
+            compte HosBank est désormais actif et sécurisé.
+        </p>
+
+        <div class="mt-6 rounded-xl bg-blue-50 px-4 py-4">
+            <h2 class="text-sm font-semibold text-slate-800">
+                Bienvenue chez vous, <%= prenom %> !
+            </h2>
+
+            <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                Votre espace personnel est prêt. Vous pouvez dès à
+                <br>
+                présent vous connecter pour finaliser vos
+                <br>
+                préférences et commencer votre aventure.
+            </p>
+        </div>
+
+        <a href="/auth/login"
+           class="mt-6 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center text-sm font-bold text-white">
+            Se connecter à mon compte
+        </a>
+
+    </div>
+</main>
+
+</body>
+
+</html>
