@@ -64,28 +64,29 @@ export async function getAllComptes(req, res) {
 
 export async function getComptesStats(req, res) {
     try {
-        const [totalResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`Compte bancaire\``
+        const [actifsResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE status = 'actif'`
         );
-        const total = totalResult[0].count;
+        const totalActifs = actifsResult[0].count;
 
-        const [blockedResult] = await connection.query(
+        const [courantsResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE typedecompte = 'Courant'`
+        );
+        const courants = courantsResult[0].count;
+
+        const [hosPlusResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE typedecompte = 'Hos+'`
+        );
+        const hosPlus = hosPlusResult[0].count;
+
+        const [bloquesResult] = await connection.query(
             `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE status = 'bloqué'`
         );
-        const blocked = blockedResult[0].count;
-
-        const [totalSoldeResult] = await connection.query(
-            `SELECT SUM(solde) as total FROM \`Compte bancaire\``
-        );
-        const totalSolde = parseFloat(totalSoldeResult[0].total) || 0;
+        const bloques = bloquesResult[0].count;
 
         return res.status(200).json({
             success: true,
-            data: {
-                total,
-                blocked,
-                totalSolde
-            }
+            data: { totalActifs, courants, hosPlus, bloques }
         });
 
     } catch (error) {

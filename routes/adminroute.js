@@ -15,6 +15,14 @@ import {
     updateUtilisateurRole,
     getAllRoles
 } from '../controllers/admincontrollers/utilisateurcontroller.js';
+import {
+    renderComptesPage,
+    getAllComptes,
+    getComptesStats,
+    getCompteById,
+    toggleCompteStatus
+} from '../controllers/admincontrollers/comptecontroller.js';
+
 
 const router = express.Router();
 
@@ -29,5 +37,11 @@ router.get('/api/utilisateurs/:userId', authMiddleware, isAdmin, getUtilisateurB
 router.put('/api/utilisateurs/:userId/toggle-status', authMiddleware, isAdmin, toggleUtilisateurStatus);
 router.put('/api/utilisateurs/:userId/role', authMiddleware, isAdmin, updateUtilisateurRole);
 router.get('/api/roles', authMiddleware, isAdmin, getAllRoles);
+
+router.get('/comptes', authMiddleware, isAdmin, renderComptesPage);
+router.get('/api/comptes', authMiddleware, isAdmin, getAllComptes);
+router.get('/api/comptes/stats', authMiddleware, isAdmin, getComptesStats);
+router.get('/api/comptes/:compteId', authMiddleware, isAdmin, getCompteById);
+router.put('/api/comptes/:compteId/toggle-status', authMiddleware, isAdmin, toggleCompteStatus);
 
 export default router;
