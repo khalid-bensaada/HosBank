@@ -112,11 +112,16 @@ export async function executeVirement(req, res) {
         
         // Nettoyage et conversion du montant
         const rawMontant = String(req.body.montant || "").trim().replace(",", ".");
-        const montant = parseFloat(rawMontant);
+        const montant = Number(rawMontant);
 
         // Validation basique des données
-        if (!compteSourceId || isNaN(montant) || montant <= 0) {
+        if (!compteSourceId || !Number.isFinite(montant) || montant <= 0 ||
+            !/^\d{1,13}(\.\d{1,2})?$/.test(rawMontant)) {
             return res.redirect("/dashboard/virements?error=montant-invalide#nouveau-virement");
+        }
+
+        if (!["interne", "beneficiaire"].includes(typeDestinataire) || motif.length > 255) {
+            return res.redirect("/dashboard/virements?error=destinataire-invalide#nouveau-virement");
         }
 
         // Obtenir une connexion pour gérer la transaction SQL
@@ -164,7 +169,7 @@ export async function executeVirement(req, res) {
             const [destComptes] = await dbConnection.query(
                 `SELECT id, numeroCompte, solde, typedecompte 
                  FROM \`compte_bancaire\` 
-                 WHERE id = ? AND clientId = ?
+                 WHERE id = ? AND clientId = ? AND status = 'active'
                  FOR UPDATE`,
                 [compteDestId, userId]
             );
