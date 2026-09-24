@@ -71,7 +71,7 @@ export async function createReclamation(req, res) {
         const description = String(req.body.description || "").trim();
         const compteId = req.body.compteId ? parseInt(req.body.compteId, 10) : null;
 
-        if (!sujetTitre || !description) {
+        if (!sujetTitre || !description || `[${categorie}] ${sujetTitre}`.length > 255 || description.length > 10000) {
             return res.redirect("/dashboard/reclamations?error=champs-requis#nouvelle-reclamation");
         }
 
