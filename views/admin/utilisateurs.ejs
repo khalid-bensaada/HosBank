@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Gestion des Utilisateurs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="px-4 py-2 hover:text-gray-900">Dashboard</a>
+                <a href="/admin/utilisateurs" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Utilisateurs</a>
+                <a href="/admin/comptes" class="px-4 py-2 hover:text-gray-900">Comptes</a>
+                <a href="/admin/cartes" class="px-4 py-2 hover:text-gray-900">Cartes</a>
+                <a href="/admin/virements" class="px-4 py-2 hover:text-gray-900">Virements</a>
+                <a href="/admin/reclamations" class="px-4 py-2 hover:text-gray-900">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+
+    <p class="text-xs text-gray-400 mb-2">
+        Administration / <span class="text-[#2563EB] font-medium">Utilisateurs</span>
+    </p>
+
+
+    <h1 class="text-3xl font-bold text-[#0F172A]">Gestion des Utilisateurs</h1>
+    <p class="text-sm text-gray-400 mt-1 mb-6">Consultez, gérez et administrez les comptes clients et collaborateurs de la plateforme.</p>
+
+
+    <div class="flex items-center gap-2 mb-6">
+        <button id="filterTous" class="bg-[#2563EB] text-white text-sm font-medium px-4 py-2 rounded-full">
+            Tous (<span id="totalCount">...</span>)
+        </button>
+    </div>
+
+
+    <div class="bg-white rounded-2xl border border-gray-50 shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm">
+            <thead>
+            <tr class="text-xs text-gray-400 border-b border-gray-50">
+                <th class="text-left font-medium px-6 py-3">NOM</th>
+                <th class="text-left font-medium px-6 py-3">PRÉNOM</th>
+                <th class="text-left font-medium px-6 py-3">EMAIL</th>
+                <th class="text-left font-medium px-6 py-3">TÉLÉPHONE</th>
+                <th class="text-left font-medium px-6 py-3">STATUT</th>
+                <th class="text-left font-medium px-6 py-3">RÔLE</th>
+                <th class="text-right font-medium px-6 py-3">ACTIONS</th>
+            </tr>
+            </thead>
+            <tbody id="usersBody">
+            <tr>
+                <td colspan="7" class="text-center py-10 text-gray-400">Chargement...</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="px-6 py-4 border-t border-gray-50">
+            <button id="btnShowAll" class="text-xs text-gray-500 font-medium hover:text-[#2563EB] flex items-center gap-1">
+                show all →
+            </button>
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = '/admin/api';
+    let allUsers = [];
+    let displayLimit = 6;
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+
+        return res.json();
+    }
+
+    function statutBadge(statut) {
+        if (statut === 'actif') {
+            return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">Actif</span>`;
+        }
+        return `<span class="bg-[#F3F4F6] text-gray-500 text-xs font-medium px-3 py-1 rounded-full">Inactif</span>`;
+    }
+
+    function roleBadge(roleName) {
+        if (roleName === 'admin') {
+            return `<span class="bg-[#EEF2FF] text-[#2563EB] text-xs font-medium px-3 py-1 rounded-full">Administrateur</span>`;
+        }
+        return `<span class="bg-[#F3F4F6] text-gray-600 text-xs font-medium px-3 py-1 rounded-full">client</span>`;
+    }
+
+    function renderUserRow(u) {
+        return `
+            <tr class="border-b border-gray-50 last:border-b-0" data-id="${u.id}">
+                <td class="px-6 py-4 font-semibold text-gray-900">${u.nom}</td>
+                <td class="px-6 py-4 text-gray-600">${u.prenom}</td>
+                <td class="px-6 py-4 text-gray-600">${u.email}</td>
+                <td class="px-6 py-4 text-gray-500 font-mono">${u.telephone || '—'}</td>
+                <td class="px-6 py-4">${statutBadge(u.statut)}</td>
+                <td class="px-6 py-4">${roleBadge(u.roleName)}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center justify-end gap-2">
+                        <button onclick="handleView(${u.id})" class="bg-[#EEF2FF] text-[#2563EB] hover:bg-blue-100 text-xs font-medium px-3 py-1.5 rounded-md">
+                            Voir
+                        </button>
+                        <button onclick="handleToggleStatus(${u.id})" class="${u.statut === 'actif' ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100' : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100'} text-xs font-medium px-3 py-1.5 rounded-md">
+                            ${u.statut === 'actif' ? 'Désactiver' : 'Activer'}
+                        </button>
+                        <button onclick="handleChangeRole(${u.id}, ${u.roleId})" class="bg-[#F0F4FF] text-[#4F46E5] hover:bg-indigo-100 text-xs font-medium px-3 py-1.5 rounded-md">
+                            Changer rôle
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    function renderUsers() {
+        const tbody = document.getElementById('usersBody');
+        const usersToShow = allUsers.slice(0, displayLimit);
+
+        if (usersToShow.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400">Aucun utilisateur trouvé.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = usersToShow.map(renderUserRow).join('');
+
+        const btnShowAll = document.getElementById('btnShowAll');
+        btnShowAll.style.display = displayLimit >= allUsers.length ? 'none' : 'block';
+    }
+
+    async function loadUsers() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/utilisateurs`);
+            allUsers = res.data || [];
+
+            document.getElementById('totalCount').textContent = allUsers.length;
+            renderUsers();
+
+        } catch (error) {
+            document.getElementById('usersBody').innerHTML =
+                `<tr><td colspan="7" class="text-center py-10 text-red-400">Erreur lors du chargement.</td></tr>`;
+            console.error(error);
+        }
+    }
+
+    function handleView(id) {
+        window.location.href = `/admin/utilisateurs/${id}`;
+    }
+
+    async function handleToggleStatus(id) {
+        if (!confirm('Voulez-vous changer le statut de cet utilisateur ?')) return;
+
+        try {
+            await fetchWithAuth(`${API_BASE}/utilisateurs/${id}/toggle-status`, { method: 'PUT' });
+            await loadUsers();
+        } catch (error) {
+            alert('Erreur lors de la mise à jour du statut.');
+            console.error(error);
+        }
+    }
+
+    async function handleChangeRole(id, currentRoleId) {
+        const newRoleId = currentRoleId === 2 ? 1 : 2;
+        const roleLabel = newRoleId === 2 ? 'Administrateur' : 'Client';
+
+        if (!confirm(`Voulez-vous changer le rôle de cet utilisateur en "${roleLabel}" ?`)) return;
+
+        try {
+            await fetchWithAuth(`${API_BASE}/utilisateurs/${id}/role`, {
+                method: 'PUT',
+                body: JSON.stringify({ roleId: newRoleId })
+            });
+            await loadUsers();
+        } catch (error) {
+            alert('Erreur lors du changement de rôle.');
+            console.error(error);
+        }
+    }
+
+    document.getElementById('btnShowAll').addEventListener('click', () => {
+        displayLimit = allUsers.length;
+        renderUsers();
+    });
+
+
+    loadUsers();
+</script>
+
+</body>
+</html>

@@ -1,10 +1,11 @@
+
 import dayjs from "dayjs";
 import { connection } from "../../config/database.js";
 
 export async function renderAdminDashboard(req, res) {
     try {
         if (!req.user) {
-            return res.redirect('/login');
+            return res.redirect('/auth/login');
         }
 
         return res.render('admin/dashboard', {
@@ -13,6 +14,7 @@ export async function renderAdminDashboard(req, res) {
         });
     }
     catch (error) {
+        console.error(error);
         return res.status(500).json({
             success: false,
             message: "something wrong here",
@@ -24,41 +26,35 @@ export async function renderAdminDashboard(req, res) {
 export async function getDashboardStats(req, res) {
     try {
         if (!req.user) {
-            return res.status(401).json({
-                message: 'can not using this'
-            });
+            return res.status(401).json({ message: 'can not using this' });
         }
 
-        const totalUsersResult = await connection('Utilisateur')
-            .count('id as count')
-            .first();
-        const totalUsers = parseInt(totalUsersResult?.count) || 0;
+        const [usersResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM utilisateur`
+        );
+        const totalUsers = usersResult[0].count;
 
-        const totalAccountsResult = await connection('Compte bancaire')
-            .count('id as count')
-            .first();
-        const totalAccounts = parseInt(totalAccountsResult?.count) || 0;
+        const [accountsResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM \`Compte bancaire\``
+        );
+        const totalAccounts = accountsResult[0].count;
 
-        const totalMoneyResult = await connection('Compte bancaire')
-            .sum('solde as total')
-            .first();
-        const totalMoney = parseFloat(totalMoneyResult?.total) || 0;
+        const [moneyResult] = await connection.query(
+            `SELECT SUM(solde) as total FROM \`Compte bancaire\``
+        );
+        const totalMoney = parseFloat(moneyResult[0].total) || 0;
 
-        const startOfToday = dayjs().startOf('day').toDate();
+        const [todayVirementsResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM Virement WHERE DATE(dateCreation) = CURDATE()`
+        );
+        const todayVirements = todayVirementsResult[0].count;
 
-        const todayVirementsResult = await connection('Virement')
-            .where('dateCreation', '>=', startOfToday)
-            .count('id as count')
-            .first();
-        const todayVirements = parseInt(todayVirementsResult?.count) || 0;
-
-        const startOfMonth = dayjs().startOf('month').toDate();
-
-        const monthVirementsResult = await connection('Virement')
-            .where('dateCreation', '>=', startOfMonth)
-            .count('id as count')
-            .first();
-        const monthVirements = parseInt(monthVirementsResult?.count) || 0;
+        const startOfMonth = dayjs().startOf('month').format('YYYY-MM-DD');
+        const [monthVirementsResult] = await connection.query(
+            `SELECT COUNT(*) as count FROM Virement WHERE dateCreation >= ?`,
+            [startOfMonth]
+        );
+        const monthVirements = monthVirementsResult[0].count;
 
         return res.status(200).json({
             success: true,
@@ -73,6 +69,44 @@ export async function getDashboardStats(req, res) {
 
     }
     catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "something wrong here",
+            error: error.message
+        });
+    }
+}
+
+export async function getRecentTransactions(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'can not using this' });
+        }
+
+        const [transactions] = await connection.query(`
+            SELECT o.*, u.nom, u.prenom, cb.iban
+            FROM Opération o
+            JOIN \`Compte bancaire\` cb ON o.compteId = cb.id
+            JOIN utilisateur u ON cb.clientId = u.id
+            ORDER BY o.dateOperation DESC
+            LIMIT 5
+        `);
+
+        const formatted = transactions.map(t => ({
+            ...t,
+            nomComplet: `${t.nom} ${t.prenom}`,
+            iban: t.iban
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data: formatted
+        });
+
+    }
+    catch (error) {
+        console.error(error);
         return res.status(500).json({
             success: false,
             message: "something wrong here",
