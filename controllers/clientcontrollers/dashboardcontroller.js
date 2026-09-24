@@ -16,11 +16,17 @@ export async function showDashboard(req, res) {
             [userId]
         );
 
-        const [solde] = await connection.query(
-            "SELECT solde FROM compte_bancaire WHERE clientId = ? LIMIT 1", [userId]
+        const [balances] = await connection.query(
+            `SELECT
+                COALESCE(SUM(CASE WHEN UPPER(typedecompte) = 'COURANT' THEN solde ELSE 0 END), 0) AS currentBalance,
+                COALESCE(SUM(CASE WHEN UPPER(typedecompte) = 'EPARGNE' THEN solde ELSE 0 END), 0) AS savingsBalance,
+                COALESCE(SUM(solde), 0) AS totalBalance
+             FROM \`compte_bancaire\`
+             WHERE clientId = ?`,
+            [userId]
         );
 
-        const userSolde = solde[0] ? solde[0].solde : 0;
+        const accountBalances = balances[0] || {};
 
         const user = users[0];
 
@@ -28,7 +34,12 @@ export async function showDashboard(req, res) {
             return req.session.destroy(() => res.redirect("/auth/login"));
         }
 
-        return res.render("clients/dashboard", {user, userSolde});
+        return res.render("clients/dashboard", {
+            user,
+            currentBalance: accountBalances.currentBalance,
+            savingsBalance: accountBalances.savingsBalance,
+            totalBalance: accountBalances.totalBalance
+        });
     } catch (error) {
         console.error("Error while loading the dashboard:", error);
         return res.status(500).send("Server error");

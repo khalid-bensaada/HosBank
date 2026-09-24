@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestion des beneficiaires HosBank">
+    <title>Beneficiaires | HosBank</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
+</head>
+
+<body class="dashboard-page beneficiaries-page">
+    <%- include("../components/navbar", {activePage: "beneficiaires" }) %>
+
+        <main class="dashboard-shell beneficiaries-shell">
+            <section class="beneficiaries-intro" aria-labelledby="beneficiaries-title">
+                <div>
+                    <p class="page-eyebrow">Virements</p>
+                    <h1 id="beneficiaries-title">Mes beneficiaires</h1>
+                    <p>Enregistrez les comptes de confiance pour simplifier vos prochains virements.</p>
+                </div>
+                <a class="beneficiaries-add-link" href="#ajouter-beneficiaire">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <span>Ajouter un beneficiaire</span>
+                </a>
+            </section>
+
+            <section class="beneficiaries-summary" aria-label="Resume des beneficiaires">
+                <span class="beneficiaries-summary-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m11-13a4 4 0 1 1 0 8m5 5v-1.5a4 4 0 0 0-3-3.87M9.5 10.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+                            stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </span>
+                <div>
+                    <strong>Vos beneficiaires</strong>
+                    <p>Ajoutez un beneficiaire pour pouvoir lui effectuer un virement.</p>
+                </div>
+                <span class="beneficiaries-count">0 beneficiaire</span>
+            </section>
+
+            <section class="beneficiaries-content">
+                <article class="beneficiaries-list-card" aria-labelledby="saved-beneficiaries-title">
+                    <header class="beneficiaries-card-heading">
+                        <div>
+                            <h2 id="saved-beneficiaries-title">Beneficiaires enregistres</h2>
+                            <p>Vos coordonnees bancaires enregistrees apparaitront ici.</p>
+                        </div>
+                        <span class="beneficiaries-filter" aria-label="Filtre inactif">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M4 6h16M7 12h10m-7 6h4" stroke="currentColor" stroke-width="1.8"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Tous
+                        </span>
+                    </header>
+
+                    <% if (beneficiaries && beneficiaries.length> 0) { %>
+                        <ul class="beneficiaries-list">
+                            <% beneficiaries.forEach(b=> { %>
+                                <li class="beneficiary-item">
+                                    <div class="beneficiary-info">
+                                        <strong>
+                                            <%= b.name %>
+                                        </strong>
+                                        <p>
+                                            <%= b.iban %> • <%= b.bank_name %>
+                                        </p>
+                                    </div>
+                                </li>
+                                <% }); %>
+                        </ul>
+                        <% } else { %>
+                            <div class="beneficiaries-empty-state">
+                                <span class="beneficiaries-empty-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7" />
+                                        <path d="M3.5 20a5.5 5.5 0 0 1 11 0m3-9 1.5 1.5L22 9.5m-3 3V5"
+                                            stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                </span>
+                                <h3>Aucun beneficiaire pour le moment</h3>
+                                <p>Ajoutez les coordonnees d'un proche ou d'un compte externe pour commencer.</p>
+                                <a href="#ajouter-beneficiaire">Ajouter mon premier beneficiaire</a>
+                            </div>
+                            <% } %>
+                </article>
+
+                <aside class="beneficiary-form-card" id="ajouter-beneficiaire" aria-labelledby="new-beneficiary-title">
+                    <div class="beneficiary-form-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <p class="page-eyebrow">Nouveau</p>
+                    <h2 id="new-beneficiary-title">Ajouter un beneficiaire</h2>
+                    <p class="beneficiary-form-description">Renseignez les informations du compte a ajouter.</p>
+
+                    <form class="beneficiary-form" action="/dashboard/beneficiaires" method="POST"
+                        aria-label="Formulaire d'ajout d'un beneficiaire">
+                        <% if (typeof success !=='undefined' && success) { %>
+                            <p class="alert alert-success" style="color: green;">
+                                <%= success %>
+                            </p>
+                            <% } %>
+                                <% if (typeof error !=='undefined' && error) { %>
+                                    <p class="alert alert-danger" style="color: red;">
+                                        <%= error %>
+                                    </p>
+                                    <% } %>
+
+                                        <label for="beneficiaryName">
+                                            <span>Nom complet</span>
+                                            <input id="beneficiaryName" name="beneficiaryName" type="text"
+                                                placeholder="Ex. Sara El Mansouri" autocomplete="name" required>
+                                        </label>
+                                        <label for="beneficiaryIban">
+                                            <span>IBAN</span>
+                                            <input id="beneficiaryIban" name="beneficiaryIban" type="text"
+                                                placeholder="MA00 0000 0000 0000 0000 0000" autocomplete="off" required>
+                                        </label>
+                                        <label for="beneficiaryBank">
+                                            <span>Banque</span>
+                                            <input id="beneficiaryBank" name="beneficiaryBank" type="text"
+                                                placeholder="Nom de la banque" autocomplete="organization" required>
+                                        </label>
+                                        <button type="submit" class="beneficiary-submit">
+                                            Ajouter le beneficiaire
+                                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.9"
+                                                    stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        </button>
+                    </form>
+                    <p class="beneficiary-form-note">Interface uniquement : l'enregistrement des beneficiaires sera
+                        ajoute prochainement.</p>
+                </aside>
+            </section>
+        </main>
+</body>
+
+</html>

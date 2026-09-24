@@ -1,0 +1,263 @@
+<%
+    const recList = typeof reclamations !== "undefined" && Array.isArray(reclamations) ? reclamations : [];
+    const accountList = typeof comptes !== "undefined" && Array.isArray(comptes) ? comptes : [];
+
+    const totalCount = recList.length;
+    const pendingCount = recList.filter(r => (r.statut || "").toLowerCase().includes("attente")).length;
+    const resolvedCount = recList.filter(r => (r.statut || "").toLowerCase().includes("résol") || (r.statut || "").toLowerCase().includes("resol")).length;
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "-";
+        const d = new Date(dateStr);
+        return d.toLocaleDateString("fr-MA", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    };
+
+    const getStatusBadgeClass = (status) => {
+        const s = String(status || "").toLowerCase();
+        if (s.includes("resol") || s.includes("résol") || s.includes("termin")) {
+            return "badge-status-success";
+        }
+        if (s.includes("cours") || s.includes("traitement")) {
+            return "badge-status-blue";
+        }
+        return "badge-status-warning";
+    };
+%>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Assistance client et gestion des réclamations HosBank.">
+    <title>Réclamations | HosBank</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
+</head>
+<body class="dashboard-page reclamations-page">
+    <%- include("../components/navbar", { activePage: "reclamations" }) %>
+
+    <main class="dashboard-shell reclamations-shell">
+        <!-- En-tête de la page -->
+        <section class="reclamations-intro" aria-labelledby="reclamations-title">
+            <div>
+                <p class="page-eyebrow">Service client &amp; Assistance</p>
+                <h1 id="reclamations-title">Mes r&eacute;clamations</h1>
+                <p>Besoin d'aide ou un probl&egrave;me constat&eacute; ? Notre &eacute;quipe d'assistance est &agrave; votre &eacute;coute 24/7.</p>
+            </div>
+            <a class="reclamations-action-link" href="#nouvelle-reclamation">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Nouvelle r&eacute;clamation</span>
+            </a>
+        </section>
+
+        <!-- Messages d'alerte (succès / erreurs) -->
+        <% if (success) { %>
+            <div class="account-alert account-alert-success" role="status">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span><%= success %></span>
+            </div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="account-alert account-alert-error" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <!-- Cartes résumé des réclamations -->
+        <section class="reclamations-stats-grid" aria-label="Statistiques des réclamations">
+            <article class="reclamation-stat-card">
+                <span class="reclamation-stat-icon reclamation-stat-icon-blue" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <span class="reclamation-stat-label">Total d&eacute;pos&eacute;es</span>
+                    <strong class="reclamation-stat-value"><%= totalCount %> <small>demande<%= totalCount > 1 ? "s" : "" %></small></strong>
+                </div>
+            </article>
+
+            <article class="reclamation-stat-card">
+                <span class="reclamation-stat-icon reclamation-stat-icon-orange" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <span class="reclamation-stat-label">En attente</span>
+                    <strong class="reclamation-stat-value"><%= pendingCount %> <small>en cours</small></strong>
+                </div>
+            </article>
+
+            <article class="reclamation-stat-card">
+                <span class="reclamation-stat-icon reclamation-stat-icon-green" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <span class="reclamation-stat-label">R&eacute;solues</span>
+                    <strong class="reclamation-stat-value"><%= resolvedCount %> <small>trait&eacute;e<%= resolvedCount > 1 ? "s" : "" %></small></strong>
+                </div>
+            </article>
+        </section>
+
+        <!-- Contenu principal : Liste à gauche + Formulaire à droite -->
+        <section class="reclamations-content-grid">
+            <!-- Liste des réclamations -->
+            <article class="reclamations-list-card" aria-labelledby="reclamations-list-title">
+                <header class="reclamations-card-heading">
+                    <div>
+                        <h2 id="reclamations-list-title">Historique de vos r&eacute;clamations</h2>
+                        <p>Suivez l'&eacute;volution du traitement de vos demandes.</p>
+                    </div>
+                    <span class="reclamations-badge"><%= totalCount %> r&eacute;clamation<%= totalCount > 1 ? "s" : "" %></span>
+                </header>
+
+                <% if (recList.length > 0) { %>
+                    <div class="reclamations-items-list">
+                        <% recList.forEach((r) => { %>
+                            <article class="reclamation-item">
+                                <div class="reclamation-item-header">
+                                    <div class="reclamation-title-box">
+                                        <h3 class="reclamation-sujet"><%= r.sujet %></h3>
+                                        <span class="reclamation-date">
+                                            <svg viewBox="0 0 24 24" fill="none" width="13" height="13" aria-hidden="true">
+                                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/>
+                                                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                                            </svg>
+                                            <%= formatDate(r.dateCreation) %>
+                                        </span>
+                                    </div>
+                                    <div class="reclamation-item-actions">
+                                        <span class="badge-status <%= getStatusBadgeClass(r.statut) %>">
+                                            <%= r.statut || "En attente" %>
+                                        </span>
+                                        <form action="/dashboard/reclamations/<%= r.id %>/delete" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir retirer cette réclamation ?');">
+                                            <button type="submit" class="reclamation-delete-btn" title="Retirer cette réclamation" aria-label="Retirer cette réclamation">
+                                                <svg viewBox="0 0 24 24" fill="none" width="15" height="15" aria-hidden="true">
+                                                    <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="reclamation-body">
+                                    <p class="reclamation-desc"><%= r.description %></p>
+                                </div>
+                            </article>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="reclamations-empty-state">
+                        <span class="reclamations-empty-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <h3>Aucune r&eacute;clamation en cours</h3>
+                        <p>Tout semble parfait ! Si vous rencontrez un incident, signalez-le avec le formulaire ci-contre.</p>
+                    </div>
+                <% } %>
+            </article>
+
+            <!-- Formulaire : Nouvelle réclamation -->
+            <aside class="reclamation-form-card" id="nouvelle-reclamation" aria-labelledby="reclamation-form-title">
+                <div class="reclamation-form-header">
+                    <span class="reclamation-form-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="page-eyebrow">Nouvelle demande</p>
+                        <h2 id="reclamation-form-title">D&eacute;poser une r&eacute;clamation</h2>
+                    </div>
+                </div>
+
+                <form class="reclamation-form" action="/dashboard/reclamations" method="POST">
+                    <!-- 1. Catégorie du problème -->
+                    <div class="form-group">
+                        <label for="categorie">Cat&eacute;gorie du probl&egrave;me</label>
+                        <select id="categorie" name="categorie" required class="form-select">
+                            <option value="Virement & Transfert">Virement ou transfert de fonds</option>
+                            <option value="Carte bancaire">Carte bancaire (blocage, paiement)</option>
+                            <option value="Opération & Solde">Erreur sur solde ou pr&eacute;l&egrave;vement</option>
+                            <option value="Accès & Sécurité">Acc&egrave;s au compte &amp; s&eacute;curit&eacute;</option>
+                            <option value="Service & Autre">Autre demande particuli&egrave;re</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Compte concerné (optionnel) -->
+                    <div class="form-group">
+                        <label for="compteId">Compte concern&eacute; (facultatif)</label>
+                        <select id="compteId" name="compteId" class="form-select">
+                            <option value="">-- Aucun compte sp&eacute;cifique --</option>
+                            <% accountList.forEach((acc) => { %>
+                                <option value="<%= acc.id %>">
+                                    Compte <%= acc.typedecompte %> (<%= acc.numeroCompte %>)
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <!-- 3. Sujet court -->
+                    <div class="form-group">
+                        <label for="sujet">Sujet de votre r&eacute;clamation</label>
+                        <input 
+                            id="sujet" 
+                            name="sujet" 
+                            type="text" 
+                            placeholder="Ex : Virement non reçu ou retard inhabituel" 
+                            required 
+                            maxlength="200"
+                            class="form-input"
+                        >
+                    </div>
+
+                    <!-- 4. Description détaillée -->
+                    <div class="form-group">
+                        <label for="description">Description d&eacute;taill&eacute;e de la situation</label>
+                        <textarea 
+                            id="description" 
+                            name="description" 
+                            rows="5" 
+                            placeholder="Veuillez d&eacute;crire votre probl&egrave;me avec un maximum de pr&eacute;cisions (date, montant, r&eacute;f&eacute;rence)..." 
+                            required 
+                            minlength="10"
+                            class="form-textarea"
+                        ></textarea>
+                    </div>
+
+                    <!-- Bouton d'envoi -->
+                    <button type="submit" class="reclamation-submit-btn">
+                        <span>Envoyer ma r&eacute;clamation</span>
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <footer class="reclamation-form-note">
+                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M12 16v-4m0-4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Un conseiller HosBank traitera votre demande sous 24 &agrave; 48 heures ouvr&eacute;es.</span>
+                </footer>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>

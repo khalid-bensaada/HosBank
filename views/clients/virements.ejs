@@ -1,0 +1,367 @@
+<%
+    const accountList = typeof comptes !== "undefined" && Array.isArray(comptes) ? comptes : [];
+    const benefList = typeof beneficiaires !== "undefined" && Array.isArray(beneficiaires) ? beneficiaires : [];
+    const virementList = typeof virements !== "undefined" && Array.isArray(virements) ? virements : [];
+
+    const currency = new Intl.NumberFormat("fr-MA", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    const totalBalance = accountList.reduce((sum, acc) => sum + Number(acc.solde || 0), 0);
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "-";
+        const d = new Date(dateStr);
+        return d.toLocaleDateString("fr-MA", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    };
+
+    const accountTypeLabel = (type) => {
+        const normalized = String(type || "").toUpperCase();
+        return normalized === "EPARGNE" ? "Compte Épargne" : "Compte Courant";
+    };
+%>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Effectuez vos virements bancaires en toute simplicité sur HosBank.">
+    <title>Virements | HosBank</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
+</head>
+<body class="dashboard-page virements-page">
+    <%- include("../components/navbar", { activePage: "virements" }) %>
+
+    <main class="dashboard-shell virements-shell">
+        <!-- En-tête de la page -->
+        <section class="virements-intro" aria-labelledby="virements-title">
+            <div>
+                <p class="page-eyebrow">Espace bancaire</p>
+                <h1 id="virements-title">Virements bancaires</h1>
+                <p>Transf&eacute;rez des fonds en temps r&eacute;el vers vos comptes ou vos b&eacute;n&eacute;ficiaires enregistr&eacute;s.</p>
+            </div>
+            <a class="virements-action-link" href="#nouveau-virement">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Nouveau virement</span>
+            </a>
+        </section>
+
+        <!-- Messages d'alerte (succès / erreurs) -->
+        <% if (success) { %>
+            <div class="account-alert account-alert-success" role="status">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                    <span><%= success %></span>
+                    <% if (typeof reference !== "undefined" && reference) { %>
+                        <strong style="margin-left: 8px;">R&eacute;f&eacute;rence : <%= reference %></strong>
+                    <% } %>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="account-alert account-alert-error" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <!-- Cartes statistiques résumé -->
+        <section class="virements-stats-grid" aria-label="Aperçu des virements">
+            <article class="virement-stat-card">
+                <span class="virement-stat-icon virement-stat-icon-blue" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M3 10h18M3 14h18m-9-8v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <span class="virement-stat-label">Solde disponible</span>
+                    <strong class="virement-stat-value"><%= currency.format(totalBalance) %> <small>MAD</small></strong>
+                </div>
+            </article>
+
+            <article class="virement-stat-card">
+                <span class="virement-stat-icon virement-stat-icon-green" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m11-13a4 4 0 1 1 0 8m5 5v-1.5a4 4 0 0 0-3-3.87M9.5 10.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <span class="virement-stat-label">B&eacute;n&eacute;ficiaires</span>
+                    <strong class="virement-stat-value"><%= benefList.length %> <small>enregistr&eacute;<%= benefList.length > 1 ? "s" : "" %></small></strong>
+                </div>
+            </article>
+
+            <article class="virement-stat-card">
+                <span class="virement-stat-icon virement-stat-icon-purple" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 16l5-5 5 5M7 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <span class="virement-stat-label">Virements r&eacute;alis&eacute;s</span>
+                    <strong class="virement-stat-value"><%= virementList.length %> <small>&eacute;mis</small></strong>
+                </div>
+            </article>
+        </section>
+
+        <!-- Contenu principal : Historique à gauche + Formulaire à droite -->
+        <section class="virements-content-grid">
+            <!-- Liste et Historique des virements -->
+            <article class="virements-history-card" aria-labelledby="virements-list-title">
+                <header class="virements-card-heading">
+                    <div>
+                        <h2 id="virements-list-title">Historique de vos virements</h2>
+                        <p>Consultez l'&eacute;tat et les d&eacute;tails de vos derniers transferts.</p>
+                    </div>
+                    <span class="virements-badge"><%= virementList.length %> op&eacute;ration<%= virementList.length > 1 ? "s" : "" %></span>
+                </header>
+
+                <% if (virementList.length > 0) { %>
+                    <div class="virements-table-wrapper">
+                        <table class="virements-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">R&eacute;f&eacute;rence</th>
+                                    <th scope="col">Compte Source</th>
+                                    <th scope="col">Destinataire</th>
+                                    <th scope="col">Motif</th>
+                                    <th scope="col" style="text-align: right;">Montant</th>
+                                    <th scope="col">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% virementList.forEach((v) => { %>
+                                    <tr>
+                                        <td class="col-date">
+                                            <span><%= formatDate(v.dateCreation) %></span>
+                                        </td>
+                                        <td class="col-ref">
+                                            <code><%= v.reference %></code>
+                                        </td>
+                                        <td>
+                                            <strong class="account-name"><%= accountTypeLabel(v.sourceCompteType) %></strong>
+                                            <span class="account-num"><%= v.sourceCompteNumero %></span>
+                                        </td>
+                                        <td>
+                                            <% if (v.destinataireNom) { %>
+                                                <strong class="recipient-name"><%= v.destinataireNom %></strong>
+                                                <% if (v.destinataireIban) { %>
+                                                    <span class="recipient-iban"><%= v.destinataireIban %></span>
+                                                <% } %>
+                                            <% } else if (v.destCompteNumero) { %>
+                                                <strong class="recipient-name"><%= accountTypeLabel(v.destCompteType) %></strong>
+                                                <span class="recipient-iban"><%= v.destCompteNumero %></span>
+                                            <% } else { %>
+                                                <span class="recipient-name">B&eacute;n&eacute;ficiaire externe</span>
+                                            <% } %>
+                                        </td>
+                                        <td class="col-motif">
+                                            <span><%= v.motif || "Virement" %></span>
+                                        </td>
+                                        <td class="col-amount" style="text-align: right;">
+                                            <span class="amount-debit">- <%= currency.format(Number(v.montant)) %> MAD</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge-status badge-status-success">
+                                                <svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                <%= v.statut || "Effectué" %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="virements-empty-state">
+                        <span class="virements-empty-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2v20m10-10H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <h3>Aucun virement effectu&eacute;</h3>
+                        <p>Effectuez votre premier virement d&egrave;s maintenant gr&acirc;ce au formulaire ci-contre.</p>
+                    </div>
+                <% } %>
+            </article>
+
+            <!-- Formulaire : Effectuer un virement -->
+            <aside class="virement-form-card" id="nouveau-virement" aria-labelledby="form-title">
+                <div class="virement-form-header">
+                    <span class="virement-form-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M4 12h16m-7-7 7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="page-eyebrow">Op&eacute;ration rapide</p>
+                        <h2 id="form-title">Nouveau virement</h2>
+                    </div>
+                </div>
+
+                <form class="virement-form" action="/dashboard/virements" method="POST" id="virementForm">
+                    <!-- 1. Sélection du compte émetteur -->
+                    <div class="form-group">
+                        <label for="compteSourceId">Compte &eacute;metteur (d&eacute;bit&eacute;)</label>
+                        <select id="compteSourceId" name="compteSourceId" required class="form-select">
+                            <% if (accountList.length === 0) { %>
+                                <option value="">Aucun compte actif disponible</option>
+                            <% } else { %>
+                                <% accountList.forEach((acc) => { %>
+                                    <option value="<%= acc.id %>">
+                                        <%= accountTypeLabel(acc.typedecompte) %> (<%= acc.numeroCompte %>) - Solde : <%= currency.format(Number(acc.solde)) %> MAD
+                                    </option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- 2. Choix du type de destinataire -->
+                    <div class="form-group">
+                        <label>Type de destinataire</label>
+                        <div class="dest-toggle-group">
+                            <label class="dest-toggle-option">
+                                <input type="radio" name="typeDestinataire" value="beneficiaire" checked id="radioBenef">
+                                <span>B&eacute;n&eacute;ficiaire</span>
+                            </label>
+                            <label class="dest-toggle-option">
+                                <input type="radio" name="typeDestinataire" value="interne" id="radioInterne">
+                                <span>Mes comptes</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 3.A. Destinataire : Bénéficiaire enregistré -->
+                    <div class="form-group" id="groupBeneficiaire">
+                        <div class="label-with-link">
+                            <label for="beneficiaireId">S&eacute;lectionner le b&eacute;n&eacute;ficiaire</label>
+                            <a href="/dashboard/beneficiaires#ajouter-beneficiaire" class="small-link">+ Ajouter</a>
+                        </div>
+                        <% if (benefList.length > 0) { %>
+                            <select id="beneficiaireId" name="beneficiaireId" class="form-select">
+                                <option value="">-- Choisir un b&eacute;n&eacute;ficiaire --</option>
+                                <% benefList.forEach((b) => { %>
+                                    <option value="<%= b.id %>">
+                                        <%= b.name %> (<%= b.bank_name || "Banque" %> - <%= b.iban.slice(-6) %>)
+                                    </option>
+                                <% }); %>
+                            </select>
+                        <% } else { %>
+                            <div class="no-benef-box">
+                                <p>Aucun b&eacute;n&eacute;ficiaire enregistr&eacute;.</p>
+                                <a href="/dashboard/beneficiaires#ajouter-beneficiaire" class="btn-text-link">Ajouter un b&eacute;n&eacute;ficiaire</a>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- 3.B. Destinataire : Compte interne (caché par défaut si type = beneficiaire) -->
+                    <div class="form-group" id="groupInterne" style="display: none;">
+                        <label for="compteDestId">Compte destinataire (cr&eacute;dit&eacute;)</label>
+                        <% if (accountList.length > 1) { %>
+                            <select id="compteDestId" name="compteDestId" class="form-select">
+                                <option value="">-- Choisir un de vos comptes --</option>
+                                <% accountList.forEach((acc) => { %>
+                                    <option value="<%= acc.id %>">
+                                        <%= accountTypeLabel(acc.typedecompte) %> (<%= acc.numeroCompte %>)
+                                    </option>
+                                <% }); %>
+                            </select>
+                        <% } else { %>
+                            <p class="helper-text">Vous devez poss&eacute;der au moins 2 comptes pour r&eacute;aliser un virement interne.</p>
+                        <% } %>
+                    </div>
+
+                    <!-- 4. Montant -->
+                    <div class="form-group">
+                        <label for="montant">Montant du virement (MAD)</label>
+                        <div class="input-with-suffix">
+                            <input 
+                                id="montant" 
+                                name="montant" 
+                                type="number" 
+                                step="0.01" 
+                                min="1" 
+                                placeholder="0.00" 
+                                required
+                                class="form-input"
+                            >
+                            <span class="input-suffix">MAD</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Motif du virement -->
+                    <div class="form-group">
+                        <label for="motif">Motif / R&eacute;f&eacute;rence personelle (facultatif)</label>
+                        <input 
+                            id="motif" 
+                            name="motif" 
+                            type="text" 
+                            placeholder="Ex : Remboursement, Facture, Cadeau..." 
+                            maxlength="100"
+                            class="form-input"
+                        >
+                    </div>
+
+                    <!-- Bouton de soumission -->
+                    <button type="submit" class="virement-submit-btn" id="submitBtn">
+                        <span>Confirmer le virement</span>
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <footer class="virement-form-security">
+                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Transaction instantan&eacute;e, s&eacute;curis&eacute;e par protocole HosBank.</span>
+                </footer>
+            </aside>
+        </section>
+    </main>
+
+    <!-- Script simple pour basculer entre Bénéficiaire et Virement Interne -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const radioBenef = document.getElementById("radioBenef");
+            const radioInterne = document.getElementById("radioInterne");
+            const groupBenef = document.getElementById("groupBeneficiaire");
+            const groupInterne = document.getElementById("groupInterne");
+            const selectBenef = document.getElementById("beneficiaireId");
+            const selectInterne = document.getElementById("compteDestId");
+
+            function updateDestinataireView() {
+                if (radioInterne && radioInterne.checked) {
+                    groupBenef.style.display = "none";
+                    groupInterne.style.display = "block";
+                    if (selectBenef) selectBenef.removeAttribute("required");
+                    if (selectInterne) selectInterne.setAttribute("required", "required");
+                } else {
+                    groupBenef.style.display = "block";
+                    groupInterne.style.display = "none";
+                    if (selectBenef) selectBenef.setAttribute("required", "required");
+                    if (selectInterne) selectInterne.removeAttribute("required");
+                }
+            }
+
+            if (radioBenef && radioInterne) {
+                radioBenef.addEventListener("change", updateDestinataireView);
+                radioInterne.addEventListener("change", updateDestinataireView);
+                updateDestinataireView();
+            }
+        });
+    </script>
+</body>
+</html>
