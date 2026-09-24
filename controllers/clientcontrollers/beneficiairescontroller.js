@@ -46,7 +46,6 @@ export async function showBeneficiaries(req, res) {
 
 export async function addBenif(req, res) {
     try {
-        console.log("Form body received:", req.body); // Check what data arrives
 
         const userId = req.session?.userId;
 
@@ -68,7 +67,7 @@ export async function addBenif(req, res) {
 
         const ibanPattern = /^[A-Z]{2}[A-Z0-9]{13,32}$/i;
 
-        if (beneficiaryName.length > 200 || !ibanPattern.test(beneficiaryIban)) {
+        if (beneficiaryName.length > 200 || beneficiaryBank.length > 100 || !ibanPattern.test(beneficiaryIban)) {
             return redirectToBeneficiaries(res, "error", "invalid");
         }
 
