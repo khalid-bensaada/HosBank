@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique | HosBank</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
+</head>
+<body class="dashboard-page">
+    <%- include("../components/navbar", { activePage: "historique" }) %>
+    <main class="dashboard-shell">
+        <section class="welcome-card"><div class="welcome-copy">
+            <h1>Historique des transactions</h1>
+            <p>Vos 100 derni&egrave;res op&eacute;rations, des plus r&eacute;centes aux plus anciennes.</p>
+        </div><a class="small-link" href="/dashboard/virements">Faire un virement</a></section>
+        <section class="transactions-card navigation-section" aria-label="Transactions">
+            <%- include("../components/transactions", { transactions }) %>
+        </section>
+    </main>
+</body>
+</html>
