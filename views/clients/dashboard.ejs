@@ -60,26 +60,7 @@
                     </div>
                 </header>
 
-                <div class="table-wrap">
-                    <table class="transactions-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Date &amp; heure</th>
-                                <th scope="col">Op&eacute;ration &amp; marchand</th>
-                                <th scope="col">Cat&eacute;gorie</th>
-                                <th scope="col">Montant</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td data-label="Date"><span class="date-main">Aujourd&rsquo;hui</span><span class="date-time">11:24</span></td>
-                                <td data-label="Op&eacute;ration"><span class="merchant">Biocoop March&eacute; Bio</span></td>
-                                <td data-label="Cat&eacute;gorie"><span class="category category-food">Alimentation</span></td>
-                                <td data-label="Montant"><span class="amount amount-debit">&minus;42,80 MAD</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <%- include("../components/transactions", { transactions }) %>
             </article>
 
             <aside class="profile-card" aria-labelledby="profile-title">
