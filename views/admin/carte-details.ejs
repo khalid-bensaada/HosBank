@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Détails Carte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="px-4 py-2 hover:text-gray-900">Dashboard</a>
+                <a href="/admin/utilisateurs" class="px-4 py-2 hover:text-gray-900">Utilisateurs</a>
+                <a href="/admin/comptes" class="px-4 py-2 hover:text-gray-900">Comptes</a>
+                <a href="/admin/cartes" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Cartes</a>
+                <a href="/admin/virements" class="px-4 py-2 hover:text-gray-900">Virements</a>
+                <a href="/admin/reclamations" class="px-4 py-2 hover:text-gray-900">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+    <p class="text-xs text-gray-400 mb-2">
+        <a href="/admin/cartes" class="hover:text-[#2563EB]">Administration / Cartes</a> / <span class="text-[#2563EB] font-medium">Détails</span>
+    </p>
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 id="pageTitle" class="text-3xl font-bold text-[#0F172A]">Chargement...</h1>
+            <p class="text-sm text-gray-400 mt-1">Détails complets de la carte bancaire.</p>
+        </div>
+        <a href="/admin/cartes" class="text-sm text-gray-500 hover:text-[#2563EB] font-medium">← Retour à la liste</a>
+    </div>
+
+    <div id="loadingState" class="text-center py-20 text-gray-400 text-sm">
+        Chargement des informations...
+    </div>
+
+    <div id="content" class="hidden space-y-6">
+
+        <!-- Card Info -->
+        <div class="bg-white rounded-2xl border border-gray-50 shadow-sm p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Informations de la carte</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Numéro de carte</p>
+                    <p id="carteNumero" class="text-sm font-semibold text-gray-900 font-mono">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Type</p>
+                    <p id="carteType" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Date d'expiration</p>
+                    <p id="carteExpiration" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Date de création</p>
+                    <p id="carteCreation" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Compte associé</p>
+                    <p id="carteCompte" class="text-sm font-semibold text-gray-900 font-mono">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">IBAN</p>
+                    <p id="carteIban" class="text-sm font-semibold text-gray-900 font-mono">—</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-gray-50">
+                <span class="text-xs text-gray-400">Statut :</span>
+                <span id="carteStatutBadge"></span>
+                <button id="btnToggleStatus" class="text-xs font-medium px-3 py-1.5 rounded-md ml-auto"></button>
+            </div>
+        </div>
+
+        <!-- Titulaire Info -->
+        <div class="bg-white rounded-2xl border border-gray-50 shadow-sm p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Titulaire</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Nom complet</p>
+                    <p id="userFullName" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Email</p>
+                    <p id="userEmail" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="errorState" class="hidden text-center py-20 text-red-400 text-sm">
+        Carte non trouvée ou erreur de chargement.
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = '/admin/api';
+    const carteId = <%= carteId %>;
+    let currentCarte = null;
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+        return res.json();
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function statutBadgeHtml(status) {
+        if (status === 'active') {
+            return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">● Active</span>`;
+        }
+        return `<span class="bg-[#FEF2F2] text-[#EF4444] text-xs font-medium px-3 py-1 rounded-full">● Bloquée</span>`;
+    }
+
+    function renderCarte(carte) {
+        document.getElementById('pageTitle').textContent = `Carte •••• ${carte.numerodeCart.slice(-4)}`;
+        document.getElementById('carteNumero').textContent = carte.numerodeCart.replace(/(.{4})/g, '$1 ').trim();
+        document.getElementById('carteType').textContent = carte.typeCarte === 'VIRTUELLE' ? 'Virtuelle' : 'Physique';
+        document.getElementById('carteExpiration').textContent = formatDate(carte.dateExperation);
+        document.getElementById('carteCreation').textContent = formatDate(carte.dateCreation);
+        document.getElementById('carteCompte').textContent = carte.numeroCompte;
+        document.getElementById('carteIban').textContent = carte.iban;
+
+        document.getElementById('userFullName').textContent = `${carte.nom} ${carte.prenom}`;
+        document.getElementById('userEmail').textContent = carte.email;
+
+        document.getElementById('carteStatutBadge').innerHTML = statutBadgeHtml(carte.status);
+
+        const btnToggle = document.getElementById('btnToggleStatus');
+        const isActive = carte.status === 'active';
+        btnToggle.textContent = isActive ? 'Bloquer' : 'Débloquer';
+        btnToggle.className = isActive
+            ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100 text-xs font-medium px-3 py-1.5 rounded-md ml-auto'
+            : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100 text-xs font-medium px-3 py-1.5 rounded-md ml-auto';
+    }
+
+    async function loadCarteDetails() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/cartes/${carteId}`);
+            currentCarte = res.data;
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            renderCarte(currentCarte);
+
+        } catch (error) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+            console.error(error);
+        }
+    }
+
+    document.getElementById('btnToggleStatus').addEventListener('click', async () => {
+        if (!confirm('Voulez-vous changer le statut de cette carte ?')) return;
+        try {
+            await fetchWithAuth(`${API_BASE}/cartes/${carteId}/toggle-status`, { method: 'PUT' });
+            await loadCarteDetails();
+        } catch (error) {
+            alert('Erreur lors de la mise à jour du statut.');
+            console.error(error);
+        }
+    });
+
+    // Init
+    loadCarteDetails();
+</script>
+
+</body>
+</html>

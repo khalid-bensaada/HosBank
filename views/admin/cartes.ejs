@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Cartes Bancaires</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="px-4 py-2 hover:text-gray-900">Dashboard</a>
+                <a href="/admin/utilisateurs" class="px-4 py-2 hover:text-gray-900">Utilisateurs</a>
+                <a href="/admin/comptes" class="px-4 py-2 hover:text-gray-900">Comptes</a>
+                <a href="/admin/cartes" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Cartes</a>
+                <a href="/admin/virements" class="px-4 py-2 hover:text-gray-900">Virements</a>
+                <a href="/admin/reclamations" class="px-4 py-2 hover:text-gray-900">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+    <p class="text-xs text-gray-400 mb-2">
+        <a href="/admin/dashboard" class="hover:text-[#2563EB]">Administration</a> &gt; <span class="text-[#2563EB] font-medium">Cartes Bancaires</span>
+    </p>
+
+    <h1 class="text-3xl font-bold text-[#0F172A]">Cartes Bancaires</h1>
+    <p class="text-sm text-gray-400 mt-1 mb-6">Supervisez, filtrez et gérez le parc de cartes physiques et virtuelles de la banque.</p>
+
+
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">TOTAL CARTES ACTIVES</p>
+            <p id="statTotal" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">CARTES PHYSIQUES</p>
+            <p id="statPhysique" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">CARTES VIRTUELLES</p>
+            <p id="statVirtuelle" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">CARTES BLOQUÉES</p>
+            <p id="statBloquees" class="text-2xl font-bold text-red-500">...</p>
+        </div>
+    </div>
+
+
+
+    <div class="bg-white rounded-2xl border border-gray-50 shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm">
+            <thead>
+            <tr class="text-xs text-gray-400 border-b border-gray-50">
+                <th class="text-left font-medium px-6 py-3">Numéro de Carte</th>
+                <th class="text-left font-medium px-6 py-3">Titulaire</th>
+                <th class="text-left font-medium px-6 py-3">Type</th>
+                <th class="text-left font-medium px-6 py-3">Date d'expiration</th>
+                <th class="text-left font-medium px-6 py-3">Statut</th>
+                <th class="text-right font-medium px-6 py-3">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="cartesBody">
+            <tr><td colspan="6" class="text-center py-10 text-gray-400">Chargement...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="px-6 py-4 border-t border-gray-50">
+            <button id="btnShowAll" class="text-xs text-gray-500 font-medium hover:text-[#2563EB]">
+                Voir tout →
+            </button>
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = '/admin/api';
+    let allCartes = [];
+    let displayLimit = 7;
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+        return res.json();
+    }
+
+    function formatExpiration(dateStr) {
+        const d = new Date(dateStr);
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${month}/${year}`;
+    }
+
+    function typeBadge(type) {
+        if (type === 'VIRTUELLE') {
+            return `<span class="bg-[#EEF2FF] text-[#2563EB] text-xs font-medium px-3 py-1 rounded-full">Virtuelle</span>`;
+        }
+        return `<span class="bg-[#F3F4F6] text-gray-600 text-xs font-medium px-3 py-1 rounded-full">Physique</span>`;
+    }
+
+    function statusBadge(status) {
+        if (status === 'active') {
+            return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">● Active</span>`;
+        }
+        return `<span class="bg-[#FEF2F2] text-[#EF4444] text-xs font-medium px-3 py-1 rounded-full">● Bloquée</span>`;
+    }
+
+    function renderCarteRow(c) {
+        const isBlocked = c.status !== 'active';
+        const numeroDisplay = isBlocked
+            ? '•••• •••• •••• ' + c.numerodeCart.slice(-4)
+            : c.numerodeCart.replace(/(.{4})/g, '$1 ').trim();
+
+        return `
+            <tr class="border-b border-gray-50 last:border-b-0">
+                <td class="px-6 py-4 font-mono font-semibold ${isBlocked ? 'text-red-500' : 'text-gray-900'}">${numeroDisplay}</td>
+                <td class="px-6 py-4 text-gray-700">${c.nom} ${c.prenom}</td>
+                <td class="px-6 py-4">${typeBadge(c.typeCarte)}</td>
+                <td class="px-6 py-4 text-gray-500">${formatExpiration(c.dateExperation)}</td>
+                <td class="px-6 py-4">${statusBadge(c.status)}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center justify-end gap-2">
+                        <button onclick="handleView(${c.id})" class="bg-[#EEF2FF] text-[#2563EB] hover:bg-blue-100 text-xs font-medium px-3 py-1.5 rounded-md">
+                            Voir
+                        </button>
+                        <button onclick="handleToggleStatus(${c.id})" class="${c.status === 'active' ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100' : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100'} text-xs font-medium px-3 py-1.5 rounded-md">
+                            ${c.status === 'active' ? 'Bloquer' : 'Débloquer'}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    function renderCartes() {
+        const tbody = document.getElementById('cartesBody');
+        const toShow = allCartes.slice(0, displayLimit);
+
+        if (toShow.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-gray-400">Aucune carte trouvée.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = toShow.map(renderCarteRow).join('');
+        document.getElementById('btnShowAll').style.display = displayLimit >= allCartes.length ? 'none' : 'block';
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/cartes/stats`);
+            const data = res.data;
+            document.getElementById('statTotal').textContent = data.total;
+            document.getElementById('statPhysique').textContent = data.physique;
+            document.getElementById('statVirtuelle').textContent = data.virtuelle;
+            document.getElementById('statBloquees').textContent = data.bloquees;
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function loadCartes() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/cartes`);
+            allCartes = res.data || [];
+            renderCartes();
+        } catch (error) {
+            document.getElementById('cartesBody').innerHTML =
+                `<tr><td colspan="6" class="text-center py-10 text-red-400">Erreur lors du chargement.</td></tr>`;
+            console.error(error);
+        }
+    }
+
+    function handleView(id) {
+        window.location.href = `/admin/cartes/${id}`;
+    }
+
+    async function handleToggleStatus(id) {
+        if (!confirm('Voulez-vous changer le statut de cette carte ?')) return;
+        try {
+            await fetchWithAuth(`${API_BASE}/cartes/${id}/toggle-status`, { method: 'PUT' });
+            await loadCartes();
+            await loadStats();
+        } catch (error) {
+            alert('Erreur lors de la mise à jour du statut.');
+            console.error(error);
+        }
+    }
+
+    document.getElementById('btnShowAll').addEventListener('click', () => {
+        displayLimit = allCartes.length;
+        renderCartes();
+    });
+
+
+
+    loadStats();
+    loadCartes();
+</script>
+
+</body>
+</html>
