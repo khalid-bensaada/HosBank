@@ -99,6 +99,16 @@ export async function getComptesStats(req, res) {
     }
 }
 
+export async function renderCompteDetailsPage(req, res) {
+    try {
+        return res.render('admin/compte-details', {
+            compteId: req.params.compteId
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Internal server error");
+    }
+}
 
 export async function getCompteById(req, res) {
     try {

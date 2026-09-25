@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Détails Compte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="px-4 py-2 hover:text-gray-900">Dashboard</a>
+                <a href="/admin/utilisateurs" class="px-4 py-2 hover:text-gray-900">Utilisateurs</a>
+                <a href="/admin/comptes" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Comptes</a>
+                <a href="/admin/cartes" class="px-4 py-2 hover:text-gray-900">Cartes</a>
+                <a href="/admin/virements" class="px-4 py-2 hover:text-gray-900">Virements</a>
+                <a href="/admin/reclamations" class="px-4 py-2 hover:text-gray-900">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+    <p class="text-xs text-gray-400 mb-2">
+        <a href="/admin/comptes" class="hover:text-[#2563EB]">Administration / Comptes</a> / <span class="text-[#2563EB] font-medium">Détails</span>
+    </p>
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 id="pageTitle" class="text-3xl font-bold text-[#0F172A]">Chargement...</h1>
+            <p class="text-sm text-gray-400 mt-1">Détails complets du compte bancaire.</p>
+        </div>
+        <a href="/admin/comptes" class="text-sm text-gray-500 hover:text-[#2563EB] font-medium">← Retour à la liste</a>
+    </div>
+
+    <div id="loadingState" class="text-center py-20 text-gray-400 text-sm">
+        Chargement des informations...
+    </div>
+
+    <div id="content" class="hidden space-y-6">
+
+        <!-- Account Info -->
+        <div class="bg-white rounded-2xl border border-gray-50 shadow-sm p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Informations du compte</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Numéro de compte</p>
+                    <p id="compteNumero" class="text-sm font-semibold text-gray-900 font-mono">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">IBAN</p>
+                    <p id="compteIban" class="text-sm font-semibold text-gray-900 font-mono">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Type de compte</p>
+                    <p id="compteType" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Solde actuel</p>
+                    <p id="compteSolde" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Date d'ouverture</p>
+                    <p id="compteOuverture" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Titulaire</p>
+                    <p id="compteTitulaire" class="text-sm font-semibold text-gray-900">—</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-gray-50">
+                <span class="text-xs text-gray-400">Statut :</span>
+                <span id="compteStatutBadge"></span>
+                <button id="btnToggleStatus" class="text-xs font-medium px-3 py-1.5 rounded-md ml-auto"></button>
+            </div>
+        </div>
+
+        <!-- Recent Operations -->
+        <div class="bg-white rounded-2xl border border-gray-50 shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-50">
+                <h2 class="text-lg font-bold text-gray-900">Dernières opérations</h2>
+                <p class="text-xs text-gray-400 mt-1">Les 10 dernières opérations sur ce compte</p>
+            </div>
+
+            <table class="w-full text-sm">
+                <thead>
+                <tr class="text-xs text-gray-400 border-b border-gray-50">
+                    <th class="text-left font-medium px-6 py-3">Date</th>
+                    <th class="text-left font-medium px-6 py-3">Type</th>
+                    <th class="text-left font-medium px-6 py-3">Description</th>
+                    <th class="text-right font-medium px-6 py-3">Montant</th>
+                    <th class="text-right font-medium px-6 py-3">Solde après</th>
+                </tr>
+                </thead>
+                <tbody id="operationsBody">
+                <tr><td colspan="5" class="text-center py-8 text-gray-400">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div id="errorState" class="hidden text-center py-20 text-red-400 text-sm">
+        Compte non trouvé ou erreur de chargement.
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = '/admin/api';
+    const compteId = <%= compteId %>;
+    let currentCompte = null;
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+        return res.json();
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatMontant(montant) {
+        return parseFloat(montant).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function statutBadgeHtml(status) {
+        if (status === 'actif') {
+            return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">● Actif</span>`;
+        }
+        return `<span class="bg-[#FEF2F2] text-[#EF4444] text-xs font-medium px-3 py-1 rounded-full">● Bloqué</span>`;
+    }
+
+    function renderOperationRow(op) {
+        const isPositive = parseFloat(op.montant) >= 0;
+        const montantClass = isPositive ? 'text-[#10B981]' : 'text-gray-900';
+        const montantSign = isPositive ? '+' : '';
+
+        return `
+            <tr class="border-b border-gray-50 last:border-b-0">
+                <td class="px-6 py-4 text-gray-500">${formatDate(op.dateOperation)}</td>
+                <td class="px-6 py-4">
+                    <span class="bg-[#EEF2FF] text-[#2563EB] text-xs font-medium px-3 py-1 rounded-full">${op.typeOperation}</span>
+                </td>
+                <td class="px-6 py-4 text-gray-600">${op.description || '—'}</td>
+                <td class="px-6 py-4 text-right font-semibold ${montantClass}">${montantSign}${formatMontant(op.montant)} MAD</td>
+                <td class="px-6 py-4 text-right text-gray-500">${formatMontant(op.soldeApres)} MAD</td>
+            </tr>
+        `;
+    }
+
+    function renderCompte(compte) {
+        document.getElementById('pageTitle').textContent = compte.numeroCompte;
+        document.getElementById('compteNumero').textContent = compte.numeroCompte;
+        document.getElementById('compteIban').textContent = compte.iban;
+        document.getElementById('compteType').textContent = compte.typedecompte;
+        document.getElementById('compteSolde').textContent = formatMontant(compte.solde) + ' MAD';
+        document.getElementById('compteOuverture').textContent = formatDate(compte.dateOuverture);
+        document.getElementById('compteTitulaire').textContent = `${compte.nom} ${compte.prenom}`;
+
+        document.getElementById('compteStatutBadge').innerHTML = statutBadgeHtml(compte.status);
+
+        const btnToggle = document.getElementById('btnToggleStatus');
+        const isActive = compte.status === 'actif';
+        btnToggle.textContent = isActive ? 'Bloquer' : 'Débloquer';
+        btnToggle.className = isActive
+            ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100 text-xs font-medium px-3 py-1.5 rounded-md ml-auto'
+            : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100 text-xs font-medium px-3 py-1.5 rounded-md ml-auto';
+
+        const opsBody = document.getElementById('operationsBody');
+        if (!compte.operations || compte.operations.length === 0) {
+            opsBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400">Aucune opération.</td></tr>`;
+        } else {
+            opsBody.innerHTML = compte.operations.map(renderOperationRow).join('');
+        }
+    }
+
+    async function loadCompteDetails() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/comptes/${compteId}`);
+            currentCompte = res.data;
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            renderCompte(currentCompte);
+
+        } catch (error) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+            console.error(error);
+        }
+    }
+
+    document.getElementById('btnToggleStatus').addEventListener('click', async () => {
+        if (!confirm('Voulez-vous changer le statut de ce compte ?')) return;
+        try {
+            await fetchWithAuth(`${API_BASE}/comptes/${compteId}/toggle-status`, { method: 'PUT' });
+            await loadCompteDetails();
+        } catch (error) {
+            alert('Erreur lors de la mise à jour du statut.');
+            console.error(error);
+        }
+    });
+
+
+    loadCompteDetails();
+</script>
+
+</body>
+</html>

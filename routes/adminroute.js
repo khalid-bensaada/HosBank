@@ -20,6 +20,7 @@ import {
 
 import {
     renderComptesPage,
+    renderCompteDetailsPage,
     getAllComptes,
     getComptesStats,
     getCompteById,
@@ -53,6 +54,7 @@ router.get('/api/roles', authMiddleware, isAdmin, getAllRoles);
 
 // Comptes
 router.get('/comptes', authMiddleware, isAdmin, renderComptesPage);
+router.get('/comptes/:compteId', authMiddleware, isAdmin, renderCompteDetailsPage);
 router.get('/api/comptes', authMiddleware, isAdmin, getAllComptes);
 router.get('/api/comptes/stats', authMiddleware, isAdmin, getComptesStats);
 router.get('/api/comptes/:compteId', authMiddleware, isAdmin, getCompteById);
