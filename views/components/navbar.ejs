@@ -1,0 +1,61 @@
+<%
+    const selectedPage = typeof activePage === "string" ? activePage : "";
+    const adminNavigation = typeof navigationMode !== "undefined" && navigationMode === "admin";
+    const navItems = adminNavigation ? [
+        {label: "Dashboard", page: "dashboard", href: "/admin/dashboard"},
+        {label: "Utilisateurs", page: "utilisateurs", href: "/admin/utilisateurs"},
+        {label: "Comptes", page: "comptes", href: "/admin/comptes"},
+        {label: "Cartes", page: "cartes", href: "/admin/cartes"},
+        {label: "Virements", page: "virements", href: "/admin/virements"},
+        {label: "R&eacute;clamations", page: "reclamations", href: "/admin/reclamations"}
+    ] : [
+        {label: "Dashboard", page: "dashboard", href: "/dashboard"},
+        {label: "Comptes", page: "comptes", href: "/dashboard/comptes"},
+        {label: "B&eacute;n&eacute;ficiaires", page: "beneficiaires", href: "/dashboard/beneficiaires"},
+        {label: "Virements", page: "virements", href: "/dashboard/virements"},
+        {label: "Historique", page: "historique", href: "/dashboard/historique"},
+        {label: "Cartes", page: "cartes", href: "/dashboard/cartes"},
+        {label: "R&eacute;clamations", page: "reclamations", href: "/dashboard/reclamations"}
+    ];
+%>
+
+<header class="site-header">
+    <nav class="navbar" aria-label="Navigation principale">
+        <a href="<%= adminNavigation ? '/admin/dashboard' : '/dashboard' %>" class="brand" aria-label="HosBank - Tableau de bord">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7.25 6.75v10.5M16.75 6.75v10.5M7.5 12h9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <span>HosBank</span>
+        </a>
+
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-navigation">
+            <span class="sr-only">Ouvrir le menu</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+
+        <div class="nav-links" id="main-navigation">
+            <% navItems.forEach((item) => { %>
+                <a
+                    href="<%= item.href %>"
+                    class="nav-link <%= selectedPage === item.page ? 'is-active' : '' %>"
+                    <%- selectedPage === item.page ? 'aria-current="page"' : '' %>
+                >
+                    <%- item.label %>
+                </a>
+            <% }); %>
+        </div>
+
+        <form class="logout-form" action="/auth/logout" method="post">
+            <button class="logout-button" type="submit" aria-label="Se d&eacute;connecter">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M10 5H6.5A2.5 2.5 0 0 0 4 7.5v9A2.5 2.5 0 0 0 6.5 19H10M14 8l4 4-4 4m4-4H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>D&eacute;connexion</span>
+            </button>
+        </form>
+    </nav>
+</header>
