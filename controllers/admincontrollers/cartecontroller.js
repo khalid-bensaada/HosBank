@@ -21,7 +21,7 @@ export async function getAllCartes(req, res) {
                    cc.status, cc.dateCreation, cc.compteId,
                    cb.numeroCompte, u.nom, u.prenom
             FROM \`Carte bancaire\` cc
-            JOIN \`Compte bancaire\` cb ON cc.compteId = cb.id
+            JOIN \`compte_bancaire\` cb ON cc.compteId = cb.id
             JOIN utilisateur u ON cb.clientId = u.id
             WHERE 1=1
         `;
@@ -114,7 +114,7 @@ export async function getCarteById(req, res) {
         const [cartes] = await connection.query(
             `SELECT cc.*, cb.numeroCompte, cb.iban, u.nom, u.prenom, u.email
              FROM \`Carte bancaire\` cc
-             JOIN \`Compte bancaire\` cb ON cc.compteId = cb.id
+             JOIN \`compte_bancaire\` cb ON cc.compteId = cb.id
              JOIN utilisateur u ON cb.clientId = u.id
              WHERE cc.id = ?`,
             [carteId]

@@ -35,12 +35,12 @@ export async function getDashboardStats(req, res) {
         const totalUsers = usersResult[0].count;
 
         const [accountsResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`Compte bancaire\``
+            `SELECT COUNT(*) as count FROM \`compte_bancaire\``
         );
         const totalAccounts = accountsResult[0].count;
 
         const [moneyResult] = await connection.query(
-            `SELECT SUM(solde) as total FROM \`Compte bancaire\``
+            `SELECT SUM(solde) as total FROM \`compte_bancaire\``
         );
         const totalMoney = parseFloat(moneyResult[0].total) || 0;
 
@@ -87,7 +87,7 @@ export async function getRecentTransactions(req, res) {
         const [transactions] = await connection.query(`
             SELECT o.*, u.nom, u.prenom, cb.iban
             FROM Opération o
-            JOIN \`Compte bancaire\` cb ON o.compteId = cb.id
+            JOIN \`compte_bancaire\` cb ON o.compteId = cb.id
             JOIN utilisateur u ON cb.clientId = u.id
             ORDER BY o.dateOperation DESC
             LIMIT 5

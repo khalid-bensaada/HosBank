@@ -81,7 +81,7 @@ export async function getUtilisateurById(req, res) {
         // récupérer aussi ses comptes bancaires
         const [comptes] = await connection.query(
             `SELECT id, numeroCompte, iban, typedecompte, solde, status
-             FROM \`Compte bancaire\`
+             FROM \`compte_bancaire\`
              WHERE clientId = ?`,
             [userId]
         );

@@ -20,7 +20,7 @@ export async function getAllComptes(req, res) {
             SELECT cb.id, cb.numeroCompte, cb.iban, cb.typedecompte, cb.solde, 
                    cb.status, cb.dateOuverture, cb.clientId,
                    u.nom, u.prenom
-            FROM \`Compte bancaire\` cb
+            FROM \`compte_bancaire\` cb
             JOIN utilisateur u ON cb.clientId = u.id
             WHERE 1=1
         `;
@@ -65,22 +65,22 @@ export async function getAllComptes(req, res) {
 export async function getComptesStats(req, res) {
     try {
         const [actifsResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE status = 'actif'`
+            `SELECT COUNT(*) as count FROM \`compte_bancaire\` WHERE status = 'actif'`
         );
         const totalActifs = actifsResult[0].count;
 
         const [courantsResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE typedecompte = 'Courant'`
+            `SELECT COUNT(*) as count FROM \`compte_bancaire\` WHERE typedecompte = 'Courant'`
         );
         const courants = courantsResult[0].count;
 
         const [hosPlusResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE typedecompte = 'Hos+'`
+            `SELECT COUNT(*) as count FROM \`compte_bancaire\` WHERE typedecompte = 'Hos+'`
         );
         const hosPlus = hosPlusResult[0].count;
 
         const [bloquesResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`Compte bancaire\` WHERE status = 'bloqué'`
+            `SELECT COUNT(*) as count FROM \`compte_bancaire\` WHERE status = 'bloqué'`
         );
         const bloques = bloquesResult[0].count;
 
@@ -116,7 +116,7 @@ export async function getCompteById(req, res) {
 
         const [comptes] = await connection.query(
             `SELECT cb.*, u.nom, u.prenom, u.email
-             FROM \`Compte bancaire\` cb
+             FROM \`compte_bancaire\` cb
              JOIN utilisateur u ON cb.clientId = u.id
              WHERE cb.id = ?`,
             [compteId]
@@ -159,7 +159,7 @@ export async function toggleCompteStatus(req, res) {
         const { compteId } = req.params;
 
         const [comptes] = await connection.query(
-            `SELECT status FROM \`Compte bancaire\` WHERE id = ?`,
+            `SELECT status FROM \`compte_bancaire\` WHERE id = ?`,
             [compteId]
         );
 
@@ -171,7 +171,7 @@ export async function toggleCompteStatus(req, res) {
         const newStatus = currentStatus === 'actif' ? 'bloqué' : 'actif';
 
         await connection.query(
-            `UPDATE \`Compte bancaire\` SET status = ? WHERE id = ?`,
+            `UPDATE \`compte_bancaire\` SET status = ? WHERE id = ?`,
             [newStatus, compteId]
         );
 

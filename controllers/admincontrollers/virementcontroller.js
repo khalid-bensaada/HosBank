@@ -16,9 +16,9 @@ export async function getAllVirements(req, res) {
         let sql = `
             SELECT v.id, v.reference, v.montant, v.motif, v.statut, v.dateCreation,
                    cb.numeroCompte, u.nom, u.prenom,
-                   b.nomComplet as beneficiaireNom, b.iban as beneficiaireIban
+                   b.name as beneficiaireNom, b.iban as beneficiaireIban
             FROM Virement v
-            JOIN \`Compte bancaire\` cb ON v.compteSourceId = cb.id
+            JOIN \`compte_bancaire\` cb ON v.compteSourceId = cb.id
             JOIN utilisateur u ON cb.clientId = u.id
             LEFT JOIN Bénéficiaire b ON v.beneficiaireId = b.id
             WHERE 1=1
@@ -26,7 +26,7 @@ export async function getAllVirements(req, res) {
         const params = [];
 
         if (search) {
-            sql += ` AND (v.reference LIKE ? OR u.nom LIKE ? OR u.prenom LIKE ? OR b.nomComplet LIKE ?)`;
+            sql += ` AND (v.reference LIKE ? OR u.nom LIKE ? OR u.prenom LIKE ? OR b.name LIKE ?)`;
             const term = `%${search}%`;
             params.push(term, term, term, term);
         }
@@ -96,9 +96,9 @@ export async function getVirementById(req, res) {
 
         const [virements] = await connection.query(`
             SELECT v.*, cb.numeroCompte, u.nom, u.prenom, u.email,
-                   b.nomComplet as beneficiaireNom, b.iban as beneficiaireIban, b.nomBanque
+                   b.name as beneficiaireNom, b.iban as beneficiaireIban, b.bank_name AS nomBanque
             FROM Virement v
-            JOIN \`Compte bancaire\` cb ON v.compteSourceId = cb.id
+            JOIN \`compte_bancaire\` cb ON v.compteSourceId = cb.id
             JOIN utilisateur u ON cb.clientId = u.id
             LEFT JOIN Bénéficiaire b ON v.beneficiaireId = b.id
             WHERE v.id = ?
