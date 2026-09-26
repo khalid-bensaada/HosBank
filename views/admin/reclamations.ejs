@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Gestion des Réclamations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="px-4 py-2 hover:text-gray-900">Dashboard</a>
+                <a href="/admin/utilisateurs" class="px-4 py-2 hover:text-gray-900">Utilisateurs</a>
+                <a href="/admin/comptes" class="px-4 py-2 hover:text-gray-900">Comptes</a>
+                <a href="/admin/cartes" class="px-4 py-2 hover:text-gray-900">Cartes</a>
+                <a href="/admin/virements" class="px-4 py-2 hover:text-gray-900">Virements</a>
+                <a href="/admin/reclamations" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+    <p class="text-xs text-gray-400 mb-2">
+        <a href="/admin/dashboard" class="hover:text-[#2563EB]">Administration</a> &gt; <span class="text-[#2563EB] font-medium">Réclamations</span>
+    </p>
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-[#0F172A]">Gestion des Réclamations</h1>
+            <p class="text-sm text-gray-400 mt-1">Consultez les réclamations envoyées par les clients de la plateforme.</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-gray-50 shadow-sm text-center">
+            <p class="text-xs text-gray-400 font-medium mb-1">TOTAL RÉCLAMATIONS</p>
+            <p id="statTotal" class="text-xl font-bold text-[#0F172A]">...</p>
+        </div>
+    </div>
+
+
+    <div class="mb-6">
+        <input type="text" id="searchInput" placeholder="Rechercher par sujet, nom ou prénom..."
+               class="w-full max-w-md border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+
+
+    <div class="bg-white rounded-2xl p-6 border border-gray-50 shadow-sm">
+
+        <p class="text-xs text-gray-400 font-medium mb-6">
+            Liste des réclamations <span id="countDisplayed" class="text-gray-400">(0 affichées)</span>
+        </p>
+
+        <div id="loadingState" class="text-center py-10 text-gray-400 text-sm">
+            Chargement des réclamations...
+        </div>
+
+        <div id="emptyState" class="hidden text-center py-10 text-gray-400 text-sm">
+            Aucune réclamation trouvée.
+        </div>
+
+        <div id="reclamationsList" class="space-y-4"></div>
+
+    </div>
+
+</main>
+
+
+<div id="detailsModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-lg">
+        <div class="flex items-start justify-between mb-4">
+            <h2 id="modalSujet" class="text-lg font-bold text-gray-900">—</h2>
+            <button id="btnCloseModal" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <div class="space-y-3 mb-6">
+            <div>
+                <p class="text-xs text-gray-400 mb-1">Envoyé par</p>
+                <p id="modalUtilisateur" class="text-sm font-semibold text-gray-900">—</p>
+                <p id="modalEmail" class="text-xs text-gray-400">—</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 mb-1">Description</p>
+                <p id="modalDescription" class="text-sm text-gray-700 leading-relaxed">—</p>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <button id="btnDeleteFromModal" class="bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100 text-sm font-medium px-4 py-2 rounded-lg">
+                Marquer comme traitée (supprimer)
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/admin/api';
+    let allReclamations = [];
+    let currentReclamationId = null;
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+        return res.json();
+    }
+
+    function truncate(text, length = 100) {
+        if (!text) return '';
+        return text.length > length ? text.substring(0, length) + '...' : text;
+    }
+
+    function renderReclamationCard(r) {
+        return `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-50 last:border-b-0 gap-4" data-id="${r.id}">
+                <div class="flex-1">
+                    <h3 class="text-base font-bold text-gray-900">${r.sujet}</h3>
+                    <p class="text-xs text-gray-400 mt-1">${r.nom} ${r.prenom} &bull; ${r.email}</p>
+                    <p class="text-sm text-gray-500 mt-2">${truncate(r.description)}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="handleView(${r.id})" class="bg-[#EEF2FF] text-[#2563EB] hover:bg-blue-100 text-xs font-medium px-4 py-1.5 rounded-md">
+                        Voir
+                    </button>
+                    <button onclick="handleDelete(${r.id})" class="bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100 text-xs font-medium px-4 py-1.5 rounded-md">
+                        Traitée
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderList(reclamations) {
+        const listContainer = document.getElementById('reclamationsList');
+        const emptyState = document.getElementById('emptyState');
+        const countDisplay = document.getElementById('countDisplayed');
+
+        if (reclamations.length === 0) {
+            listContainer.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            countDisplay.textContent = '(0 affichées)';
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+        listContainer.innerHTML = reclamations.map(renderReclamationCard).join('');
+        countDisplay.textContent = `(${reclamations.length} affichées)`;
+    }
+
+    async function loadReclamations() {
+        const loadingState = document.getElementById('loadingState');
+        loadingState.classList.remove('hidden');
+
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/reclamations`);
+            allReclamations = res.data || [];
+
+            loadingState.classList.add('hidden');
+            renderList(allReclamations);
+
+        } catch (error) {
+            loadingState.textContent = 'Erreur lors du chargement.';
+            console.error(error);
+        }
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/reclamations/stats`);
+            document.getElementById('statTotal').textContent = res.data.total;
+        } catch (error) {
+            document.getElementById('statTotal').textContent = '—';
+            console.error(error);
+        }
+    }
+
+    function handleView(id) {
+        const r = allReclamations.find(x => x.id === id);
+        if (!r) return;
+
+        currentReclamationId = id;
+        document.getElementById('modalSujet').textContent = r.sujet;
+        document.getElementById('modalUtilisateur').textContent = `${r.nom} ${r.prenom}`;
+        document.getElementById('modalEmail').textContent = r.email;
+        document.getElementById('modalDescription').textContent = r.description || 'Aucune description.';
+        document.getElementById('detailsModal').classList.remove('hidden');
+    }
+
+    async function handleDelete(id) {
+        if (!confirm('Marquer cette réclamation comme traitée ? Elle sera définitivement supprimée.')) return;
+
+        try {
+            await fetchWithAuth(`${API_BASE}/reclamations/${id}`, { method: 'DELETE' });
+            document.getElementById('detailsModal').classList.add('hidden');
+            await loadReclamations();
+            await loadStats();
+        } catch (error) {
+            alert('Erreur lors de la suppression.');
+            console.error(error);
+        }
+    }
+
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+        document.getElementById('detailsModal').classList.add('hidden');
+    });
+
+    document.getElementById('btnDeleteFromModal').addEventListener('click', () => {
+        if (currentReclamationId) handleDelete(currentReclamationId);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = allReclamations.filter(r =>
+            r.sujet.toLowerCase().includes(term) ||
+            r.nom.toLowerCase().includes(term) ||
+            r.prenom.toLowerCase().includes(term)
+        );
+        renderList(filtered);
+    });
+
+
+    loadStats();
+    loadReclamations();
+</script>
+
+</body>
+</html>

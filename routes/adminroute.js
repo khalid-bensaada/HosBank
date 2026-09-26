@@ -44,6 +44,14 @@ import {
     getVirementById
 } from '../controllers/admincontrollers/virementcontroller.js';
 
+import {
+    renderReclamationsPage,
+    getAllReclamations,
+    getReclamationsStats,
+    getReclamationById,
+    deleteReclamation
+} from '../controllers/admincontrollers/reclamationcontroller.js';
+
 const router = express.Router();
 
 // Dashboard
@@ -82,5 +90,12 @@ router.get('/virements/:virementId', authMiddleware, isAdmin, renderVirementDeta
 router.get('/api/virements', authMiddleware, isAdmin, getAllVirements);
 router.get('/api/virements/stats', authMiddleware, isAdmin, getVirementsStats);
 router.get('/api/virements/:virementId', authMiddleware, isAdmin, getVirementById);
+
+//reclamation
+router.get('/reclamations', authMiddleware, isAdmin, renderReclamationsPage);
+router.get('/api/reclamations', authMiddleware, isAdmin, getAllReclamations);
+router.get('/api/reclamations/stats', authMiddleware, isAdmin, getReclamationsStats);
+router.get('/api/reclamations/:reclamationId', authMiddleware, isAdmin, getReclamationById);
+router.delete('/api/reclamations/:reclamationId', authMiddleware, isAdmin, deleteReclamation);
 
 export default router;
