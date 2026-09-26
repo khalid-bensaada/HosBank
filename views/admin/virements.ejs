@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBank - Suivi des Virements</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8F9FE] text-gray-800 font-sans antialiased">
+
+<header class="bg-white border-b border-gray-100 px-8 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-8">
+            <div class="text-xl font-extrabold text-[#2563EB] flex items-center gap-2">
+                <span class="bg-[#2563EB] text-white rounded-lg w-7 h-7 flex items-center justify-center text-sm">H</span>
+                HosBank
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium text-gray-600">
+                <a href="/admin/dashboard" class="px-4 py-2 hover:text-gray-900">Dashboard</a>
+                <a href="/admin/utilisateurs" class="px-4 py-2 hover:text-gray-900">Utilisateurs</a>
+                <a href="/admin/comptes" class="px-4 py-2 hover:text-gray-900">Comptes</a>
+                <a href="/admin/cartes" class="px-4 py-2 hover:text-gray-900">Cartes</a>
+                <a href="/admin/virements" class="bg-[#2563EB] text-white px-4 py-2 rounded-lg font-semibold">Virements</a>
+                <a href="/admin/reclamations" class="px-4 py-2 hover:text-gray-900">Réclamations</a>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-8">
+
+    <p class="text-xs text-gray-400 mb-2">
+        <a href="/admin/dashboard" class="hover:text-[#2563EB]">Administration</a> &gt; <span class="text-[#2563EB] font-medium">Suivi des Virements</span>
+    </p>
+
+    <h1 class="text-3xl font-bold text-[#0F172A]">Suivi des Virements</h1>
+    <p class="text-sm text-gray-400 mt-1 mb-6">Supervisez et auditez en temps réel les flux et ordres de virement de la banque.</p>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">VIREMENTS AUJOURD'HUI</p>
+            <p id="statToday" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">TERMINÉS AVEC SUCCÈS</p>
+            <p id="statTermine" class="text-2xl font-bold text-[#16A34A]">...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm">
+            <p class="text-xs text-gray-400 font-medium mb-1">MONTANT TOTAL TRAITÉ</p>
+            <p id="statMontant" class="text-2xl font-bold text-[#0F172A]">...</p>
+        </div>
+    </div>
+
+
+    <div class="bg-white rounded-2xl border border-gray-50 shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm">
+            <thead>
+            <tr class="text-xs text-gray-400 border-b border-gray-50">
+                <th class="text-left font-medium px-6 py-3">RÉFÉRENCE</th>
+                <th class="text-left font-medium px-6 py-3">COMPTE SOURCE</th>
+                <th class="text-left font-medium px-6 py-3">BÉNÉFICIAIRE</th>
+                <th class="text-right font-medium px-6 py-3">MONTANT</th>
+                <th class="text-left font-medium px-6 py-3">DATE & HEURE</th>
+                <th class="text-left font-medium px-6 py-3">STATUT</th>
+                <th class="text-right font-medium px-6 py-3">ACTIONS</th>
+            </tr>
+            </thead>
+            <tbody id="virementsBody">
+            <tr><td colspan="7" class="text-center py-10 text-gray-400">Chargement...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="px-6 py-4 border-t border-gray-50">
+            <button id="btnShowAll" class="text-xs text-gray-500 font-medium hover:text-[#2563EB]">
+                voir tout →
+            </button>
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = '/admin/api';
+    let allVirements = [];
+    let displayLimit = 7;
+
+    async function fetchWithAuth(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/auth/login';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Request failed');
+        }
+        return res.json();
+    }
+
+    function formatMontant(montant) {
+        return parseFloat(montant).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) +
+            ', ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function statutBadge(statut) {
+        if (statut === 'terminé') {
+            return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">● Terminé</span>`;
+        }
+        if (statut === 'rejeté') {
+            return `<span class="bg-[#FEF2F2] text-[#EF4444] text-xs font-medium px-3 py-1 rounded-full">● Rejeté</span>`;
+        }
+        return `<span class="bg-[#EEF2FF] text-[#2563EB] text-xs font-medium px-3 py-1 rounded-full">● ${statut}</span>`;
+    }
+
+    function renderVirementRow(v) {
+        const isRejected = v.statut === 'rejeté';
+
+        return `
+            <tr class="border-b border-gray-50 last:border-b-0">
+                <td class="px-6 py-4 font-mono text-gray-500">${v.reference}</td>
+                <td class="px-6 py-4">
+                    <div class="font-semibold text-gray-900">${v.nom} ${v.prenom}</div>
+                    <div class="text-xs text-gray-400 font-mono">${v.numeroCompte}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="font-semibold text-gray-900">${v.beneficiaireNom || '—'}</div>
+                    <div class="text-xs text-gray-400 font-mono">${v.beneficiaireIban || ''}</div>
+                </td>
+                <td class="px-6 py-4 text-right font-semibold ${isRejected ? 'text-red-500' : 'text-gray-900'}">${formatMontant(v.montant)} MAD</td>
+                <td class="px-6 py-4 text-gray-500">${formatDate(v.dateCreation)}</td>
+                <td class="px-6 py-4">${statutBadge(v.statut)}</td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="handleView(${v.id})" class="bg-[#EEF2FF] text-[#2563EB] hover:bg-blue-100 text-xs font-medium px-3 py-1.5 rounded-md">
+                        Voir
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+
+    function renderVirements() {
+        const tbody = document.getElementById('virementsBody');
+        const toShow = allVirements.slice(0, displayLimit);
+
+        if (toShow.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400">Aucun virement trouvé.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = toShow.map(renderVirementRow).join('');
+        document.getElementById('btnShowAll').style.display = displayLimit >= allVirements.length ? 'none' : 'block';
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/virements/stats`);
+            const data = res.data;
+            document.getElementById('statToday').textContent = data.today;
+            document.getElementById('statTermine').textContent = data.termine;
+            document.getElementById('statMontant').textContent = formatMontant(data.totalMontant) + ' MAD';
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function loadVirements() {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/virements`);
+            allVirements = res.data || [];
+            renderVirements();
+        } catch (error) {
+            document.getElementById('virementsBody').innerHTML =
+                `<tr><td colspan="7" class="text-center py-10 text-red-400">Erreur lors du chargement.</td></tr>`;
+            console.error(error);
+        }
+    }
+
+    function handleView(id) {
+        window.location.href = `/admin/virements/${id}`;
+    }
+
+    document.getElementById('btnShowAll').addEventListener('click', () => {
+        displayLimit = allVirements.length;
+        renderVirements();
+    });
+
+
+    loadStats();
+    loadVirements();
+</script>
+
+</body>
+</html>

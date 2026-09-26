@@ -38,6 +38,7 @@ import {
 
 import {
     renderVirementsPage,
+    renderVirementDetailsPage,
     getAllVirements,
     getVirementsStats,
     getVirementById
@@ -77,6 +78,7 @@ router.put('/api/cartes/:carteId/toggle-status', authMiddleware, isAdmin, toggle
 
 // verments
 router.get('/virements', authMiddleware, isAdmin, renderVirementsPage);
+router.get('/virements/:virementId', authMiddleware, isAdmin, renderVirementDetailsPage);
 router.get('/api/virements', authMiddleware, isAdmin, getAllVirements);
 router.get('/api/virements/stats', authMiddleware, isAdmin, getVirementsStats);
 router.get('/api/virements/:virementId', authMiddleware, isAdmin, getVirementById);

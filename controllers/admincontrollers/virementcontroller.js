@@ -79,6 +79,17 @@ export async function getVirementsStats(req, res) {
     }
 }
 
+export async function renderVirementDetailsPage(req, res) {
+    try {
+        return res.render('admin/virement-details', {
+            virementId: req.params.virementId
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Internal server error");
+    }
+}
+
 export async function getVirementById(req, res) {
     try {
         const { virementId } = req.params;
