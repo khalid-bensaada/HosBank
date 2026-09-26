@@ -1,6 +1,6 @@
 import express from "express";
 
-import {showRegister, showLogin, register, verifyEmail, login} from "../controllers/authcontroller.js";
+import {showRegister, showLogin, register, verifyEmail, login, logout} from "../controllers/authcontroller.js";
 
 
 const router = express.Router();
@@ -29,9 +29,7 @@ router.get(
     verifyEmail
 );
 
-router.get(
-    "/login", showLogin
-)
+router.post("/logout", logout);
 
 router.post(
     "/login", login

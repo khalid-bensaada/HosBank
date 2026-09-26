@@ -3,6 +3,7 @@ import crypto from "crypto";
 
 import {connection} from "../config/database.js";
 import transporter from "../config/mail.js";
+import { isUserActive, stoppedMessage } from "../middleware/authmiddleware.js";
 
 //function to render to auth/register
 
@@ -11,7 +12,19 @@ export function showRegister(req, res){
 }
 
 export function showLogin(req, res){
-    res.render("auth/login");
+    res.render("auth/login", {
+        error: req.query.error === "account-stopped" ? stoppedMessage : undefined
+    });
+}
+
+export function logout(req, res) {
+    req.session.destroy((error) => {
+        if (error) {
+            return res.status(500).send("Server error");
+        }
+        res.clearCookie("connect.sid");
+        return res.redirect("/auth/login");
+    });
 }
 
 // function of register
@@ -44,8 +57,8 @@ export async function register(req, res){
 
         await connection.query(
             `INSERT INTO utilisateur 
-            (nom, prenom, email, motDePass, telephone, adresse, emailVerifie, roleId, verification_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (nom, prenom, email, motDePass, telephone, adresse, emailVerifie, roleId, verification_token, statut)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif')`,
             [
                 nom,
                 prenom,
@@ -160,6 +173,18 @@ export async function login(req, res) {
             });
         }
 
+        if (!isUserActive(user)) {
+            return req.session.destroy(() => {
+                res.clearCookie("connect.sid");
+                return res.status(403).render("auth/login", { error: stoppedMessage });
+            });
+        }
+
+        user.roleId = Number(user.roleId);
+        if (![1, 2].includes(user.roleId)) {
+            return res.status(403).render("auth/login", { error: "Access denied - Invalid role." });
+        }
+
         if (!user.emailVerifie) {
             return res.status(403).render("auth/login", {
                 error: "Verifier ton Email avant se connecter."
@@ -167,6 +192,7 @@ export async function login(req, res) {
         }
 
 
+        req.session.userId = user.id;
         req.session.user = {
             id: user.id,
             nom: user.nom,
