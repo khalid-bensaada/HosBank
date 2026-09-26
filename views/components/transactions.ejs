@@ -1,0 +1,19 @@
+<div class="table-wrap">
+    <table class="virements-table">
+        <thead><tr><th>Date</th><th>Op&eacute;ration</th><th>Compte</th><th>Montant</th></tr></thead>
+        <tbody>
+            <% if (transactions.length === 0) { %>
+                <tr><td colspan="4">Aucune transaction pour le moment.</td></tr>
+            <% } %>
+            <% transactions.forEach(function (transaction) { %>
+                <% const incoming = transaction.type === "VIREMENT_RECU"; %>
+                <tr>
+                    <td><%= new Date(transaction.created_at).toLocaleDateString("fr-FR") %></td>
+                    <td><span class="merchant"><%= transaction.description || "Virement" %></span><small><%= transaction.reference %></small></td>
+                    <td><%= incoming ? transaction.destinationNumero : transaction.sourceNumero %></td>
+                    <td class="<%= incoming ? 'amount-credit' : 'amount-debit' %>"><%= incoming ? '+' : '-' %><%= Number(transaction.amount).toFixed(2) %> MAD</td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartes | HosBank</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
+</head>
+<body class="dashboard-page">
+    <%- include("../components/navbar", { activePage: "cartes" }) %>
+    <main class="dashboard-shell">
+        <section class="welcome-card"><div class="welcome-copy">
+            <h1>Mes cartes bancaires</h1><p>Consultez vos cartes et leur statut.</p>
+        </div></section>
+        <section class="bank-cards-grid navigation-section" aria-label="Mes cartes">
+            <% if (cards.length === 0) { %>
+                <article class="profile-card"><h2>Aucune carte disponible</h2>
+                    <p>Vous n'avez pas encore de carte associ&eacute;e &agrave; vos comptes.</p>
+                    <a class="small-link" href="/dashboard/reclamations">Contacter le service client</a>
+                </article>
+            <% } %>
+            <% cards.forEach(function (card) { %>
+                <article class="bank-card">
+                    <div class="bank-card-heading"><strong>HosBank</strong><span><%= card.typeCarte %></span></div>
+                    <p class="bank-card-number">•••• •••• •••• <%= card.lastDigits %></p>
+                    <p>Expiration : <%= new Date(card.dateExperation).toLocaleDateString("fr-FR", { month: "2-digit", year: "numeric" }) %></p>
+                    <p>Compte : <%= card.numeroCompte %></p>
+                    <span class="badge-status badge-status-blue"><%= card.status %></span>
+                </article>
+            <% }); %>
+        </section>
+    </main>
+</body>
+</html>
