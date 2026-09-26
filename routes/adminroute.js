@@ -36,6 +36,13 @@ import {
     toggleCarteStatus
 } from '../controllers/admincontrollers/cartecontroller.js';
 
+import {
+    renderVirementsPage,
+    getAllVirements,
+    getVirementsStats,
+    getVirementById
+} from '../controllers/admincontrollers/virementcontroller.js';
+
 const router = express.Router();
 
 // Dashboard
@@ -67,5 +74,11 @@ router.get('/api/cartes', authMiddleware, isAdmin, getAllCartes);
 router.get('/api/cartes/stats', authMiddleware, isAdmin, getCartesStats);
 router.get('/api/cartes/:carteId', authMiddleware, isAdmin, getCarteById);
 router.put('/api/cartes/:carteId/toggle-status', authMiddleware, isAdmin, toggleCarteStatus);
+
+// verments
+router.get('/virements', authMiddleware, isAdmin, renderVirementsPage);
+router.get('/api/virements', authMiddleware, isAdmin, getAllVirements);
+router.get('/api/virements/stats', authMiddleware, isAdmin, getVirementsStats);
+router.get('/api/virements/:virementId', authMiddleware, isAdmin, getVirementById);
 
 export default router;
