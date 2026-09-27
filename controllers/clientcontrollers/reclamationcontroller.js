@@ -28,7 +28,7 @@ export async function showReclamations(req, res) {
         const [comptes] = await connection.query(
             `SELECT id, numeroCompte, typedecompte
              FROM \`compte_bancaire\`
-             WHERE clientId = ? AND status = 'active'`,
+             WHERE clientId = ? AND LOWER(TRIM(status)) IN ('actif', 'active')`,
             [userId]
         );
 

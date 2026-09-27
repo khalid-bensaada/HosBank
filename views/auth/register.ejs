@@ -19,6 +19,14 @@
         </p>
     </div>
 
+    <% if (typeof error !== "undefined" && error) { %>
+        <p class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert"><%= error %></p>
+    <% } %>
+
+    <% if (typeof success !== "undefined" && success) { %>
+        <p class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status"><%= success %></p>
+    <% } %>
+
     <form action="/auth/register" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <div>
@@ -72,7 +80,19 @@
             </label>
             <textarea id="adresse" name="adresse" rows="1" placeholder="Votre adresse"
                       class="w-full px-4 py-3 bg-slate-100 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                      required></textarea>
+                       required></textarea>
+        </div>
+
+        <div>
+            <label for="soldeInitial" class="block text-xs font-bold text-slate-500 uppercase mb-2">
+                Solde initial du compte courant
+            </label>
+            <div class="relative">
+                <input type="number" id="soldeInitial" name="soldeInitial" min="0" step="0.01" inputmode="decimal" placeholder="0.00"
+                       class="w-full px-4 py-3 pr-16 bg-slate-100 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       required>
+                <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-bold text-slate-500">MAD</span>
+            </div>
         </div>
 
         <button type="submit"

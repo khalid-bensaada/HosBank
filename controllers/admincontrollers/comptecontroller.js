@@ -65,7 +65,7 @@ export async function getAllComptes(req, res) {
 export async function getComptesStats(req, res) {
     try {
         const [actifsResult] = await connection.query(
-            `SELECT COUNT(*) as count FROM \`compte_bancaire\` WHERE status = 'actif'`
+            `SELECT COUNT(*) as count FROM \`compte_bancaire\` WHERE LOWER(TRIM(status)) IN ('actif', 'active')`
         );
         const totalActifs = actifsResult[0].count;
 
@@ -168,7 +168,7 @@ export async function toggleCompteStatus(req, res) {
         }
 
         const currentStatus = comptes[0].status;
-        const newStatus = currentStatus === 'actif' ? 'bloqué' : 'actif';
+        const newStatus = ['actif', 'active'].includes(String(currentStatus || '').trim().toLowerCase()) ? 'bloqué' : 'actif';
 
         await connection.query(
             `UPDATE \`compte_bancaire\` SET status = ? WHERE id = ?`,

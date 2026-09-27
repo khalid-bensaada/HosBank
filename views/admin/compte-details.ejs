@@ -133,7 +133,7 @@
     }
 
     function statutBadgeHtml(status) {
-        if (status === 'actif') {
+        if (['actif', 'active'].includes(String(status || '').trim().toLowerCase())) {
             return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">● Actif</span>`;
         }
         return `<span class="bg-[#FEF2F2] text-[#EF4444] text-xs font-medium px-3 py-1 rounded-full">● Bloqué</span>`;
@@ -169,7 +169,7 @@
         document.getElementById('compteStatutBadge').innerHTML = statutBadgeHtml(compte.status);
 
         const btnToggle = document.getElementById('btnToggleStatus');
-        const isActive = compte.status === 'actif';
+        const isActive = ['actif', 'active'].includes(String(compte.status || '').trim().toLowerCase());
         btnToggle.textContent = isActive ? 'Bloquer' : 'Débloquer';
         btnToggle.className = isActive
             ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100 text-xs font-medium px-3 py-1.5 rounded-md ml-auto'

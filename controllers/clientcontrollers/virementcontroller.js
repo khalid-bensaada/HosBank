@@ -21,7 +21,7 @@ export async function showVirements(req, res) {
         const [comptes] = await connection.query(
             `SELECT id, numeroCompte, iban, typedecompte, solde, status
              FROM \`compte_bancaire\`
-             WHERE clientId = ? AND status = 'active'
+             WHERE clientId = ? AND LOWER(TRIM(status)) IN ('actif', 'active')
              ORDER BY typedecompte ASC`,
             [userId]
         );
@@ -132,7 +132,7 @@ export async function executeVirement(req, res) {
         const [sources] = await dbConnection.query(
             `SELECT id, numeroCompte, solde, typedecompte 
              FROM \`compte_bancaire\` 
-             WHERE id = ? AND clientId = ? AND status = 'active'
+             WHERE id = ? AND clientId = ? AND LOWER(TRIM(status)) IN ('actif', 'active')
              FOR UPDATE`,
             [compteSourceId, userId]
         );
@@ -169,7 +169,7 @@ export async function executeVirement(req, res) {
             const [destComptes] = await dbConnection.query(
                 `SELECT id, numeroCompte, solde, typedecompte 
                  FROM \`compte_bancaire\` 
-                 WHERE id = ? AND clientId = ? AND status = 'active'
+                 WHERE id = ? AND clientId = ? AND LOWER(TRIM(status)) IN ('actif', 'active')
                  FOR UPDATE`,
                 [compteDestId, userId]
             );

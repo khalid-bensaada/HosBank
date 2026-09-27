@@ -106,14 +106,14 @@
     }
 
     function statusBadge(status) {
-        if (status === 'actif') {
+        if (['actif', 'active'].includes(String(status || '').trim().toLowerCase())) {
             return `<span class="bg-[#F0FDF4] text-[#16A34A] text-xs font-medium px-3 py-1 rounded-full">● Actif</span>`;
         }
         return `<span class="bg-[#FEF2F2] text-[#EF4444] text-xs font-medium px-3 py-1 rounded-full">● Bloqué</span>`;
     }
 
     function renderCompteRow(c) {
-        const isBlocked = c.status !== 'actif';
+        const isBlocked = !['actif', 'active'].includes(String(c.status || '').trim().toLowerCase());
         return `
             <tr class="border-b border-gray-50 last:border-b-0">
                 <td class="px-6 py-4 font-mono font-semibold ${isBlocked ? 'text-red-500' : 'text-gray-900'}">${c.numeroCompte}</td>
@@ -127,8 +127,8 @@
                         <button onclick="handleView(${c.id})" class="bg-[#EEF2FF] text-[#2563EB] hover:bg-blue-100 text-xs font-medium px-3 py-1.5 rounded-md">
                             Voir
                         </button>
-                        <button onclick="handleToggleStatus(${c.id})" class="${c.status === 'actif' ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100' : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100'} text-xs font-medium px-3 py-1.5 rounded-md">
-                            ${c.status === 'actif' ? 'Bloquer' : 'Débloquer'}
+                        <button onclick="handleToggleStatus(${c.id})" class="${['actif', 'active'].includes(String(c.status || '').trim().toLowerCase()) ? 'bg-[#FEF2F2] text-[#EF4444] hover:bg-red-100' : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-green-100'} text-xs font-medium px-3 py-1.5 rounded-md">
+                            ${['actif', 'active'].includes(String(c.status || '').trim().toLowerCase()) ? 'Bloquer' : 'Débloquer'}
                         </button>
                     </div>
                 </td>

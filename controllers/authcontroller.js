@@ -20,8 +20,10 @@ export function showLogin(req, res){
 export function logout(req, res) {
     req.session.destroy((error) => {
         if (error) {
+            console.error("Logout error:", error);
             return res.status(500).send("Server error");
         }
+
         res.clearCookie("connect.sid");
         return res.redirect("/auth/login");
     });
@@ -32,11 +34,24 @@ export function logout(req, res) {
 export async function register(req, res){
 
     try{
-        const {nom, prenom, email, motdepass, telephone, adresse} = req.body; 
+        const {nom, prenom, email, motdepass, telephone, adresse, soldeInitial} = req.body;
 
-        if(!nom || !prenom || !email || !motdepass || !telephone || !adresse){
+        if(!nom || !prenom || !email || !motdepass || !telephone || !adresse || soldeInitial === undefined || soldeInitial === ""){
             return res.status(400).render("auth/register", {
                 error: "all fields are required"
+            });
+        }
+
+        const balanceInput = String(soldeInitial).trim().replace(",", ".");
+        const initialBalance = Number(balanceInput);
+
+        if (
+            !Number.isFinite(initialBalance) ||
+            initialBalance < 0 ||
+            !Number.isInteger(initialBalance * 100)
+        ) {
+            return res.status(400).render("auth/register", {
+                error: "Enter a valid initial balance in MAD."
             });
         }
 
@@ -55,7 +70,7 @@ export async function register(req, res){
         const verificationToken = crypto.randomBytes(32).toString('hex');
 
 
-        await connection.query(
+        const [registration] = await connection.query(
             `INSERT INTO utilisateur 
             (nom, prenom, email, motDePass, telephone, adresse, emailVerifie, roleId, verification_token, statut)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif')`,
@@ -70,6 +85,17 @@ export async function register(req, res){
                 1,
                 verificationToken
             ]
+        );
+
+        const accountEntropy = crypto.randomBytes(8).toString("hex").toUpperCase();
+        const numeroCompte = `HOS-${accountEntropy.slice(0, 4)}-${accountEntropy.slice(4, 12)}`;
+        const iban = `MA${crypto.randomInt(10, 100)}HOS${accountEntropy}`;
+
+        await connection.query(
+            `INSERT INTO \`compte_bancaire\`
+             (numeroCompte, iban, typedecompte, solde, status, clientId)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [numeroCompte, iban, "COURANT", initialBalance.toFixed(2), "active", registration.insertId]
         );
 
 

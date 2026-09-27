@@ -133,9 +133,9 @@ export async function createSavingsAccount(req, res) {
              FROM \`compte_bancaire\`
              WHERE clientId = ?
                AND UPPER(typedecompte) = ?
-               AND status = ?
+               AND LOWER(TRIM(status)) IN ('actif', 'active')
              LIMIT 1 FOR UPDATE`,
-            [userId, "COURANT", "active"]
+            [userId, "COURANT"]
         );
 
         const principalAccount = principalAccounts[0];

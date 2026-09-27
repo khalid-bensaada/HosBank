@@ -22,6 +22,7 @@ app.use(session({
     saveUninitialized: false
 }));
 
+
 app.use(
     "/auth",
     authRoutes

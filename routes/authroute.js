@@ -29,11 +29,13 @@ router.get(
     verifyEmail
 );
 
-router.post("/logout", logout);
-
 router.post(
     "/login", login
-)
+);
+
+router.post(
+    "/logout", logout
+);
 
 
 
